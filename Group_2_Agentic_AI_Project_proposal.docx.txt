@@ -1,0 +1,306 @@
+﻿GROUP- 2
+PROJECT PROPOSAL
+
+
+WareSync AI
+Multi-Agent System for Coordinated Warehouse Operations
+
+
+
+
+* Section 1: Abstract and Methodology
+
+
+1.1 ABSTRACT
+
+
+SmartWarehouse AI is an intelligent multi-agent warehouse management system designed to automate and coordinate key warehouse operations, including inventory monitoring, procurement, order dispatch, and supplier invoice processing. The system uses an Agentic AI architecture in which specialized agents collaborate through tools, shared data, and structured communication to solve warehouse-related tasks.
+
+
+The system consists of five agents: Supervisor Agent, Inventory Agent, Order/Procurement Agent, Dispatch Agent, and Invoice Agent. The Supervisor Agent coordinates the workflow, while the specialized agents perform their respective operational tasks. A Retrieval-Augmented Generation (RAG) system provides access to warehouse policies, standard operating procedures, procurement rules, and invoice guidelines. Model Context Protocol (MCP) enables agents to securely interact with warehouse tools and database services. Agent-to-agent or event-based communication is used for events such as low-stock alerts, stock requirements, and verified invoice receipts.
+
+
+The project will evaluate sequential, hierarchical, and event-driven orchestration approaches using at least 40 warehouse scenarios. Performance will be measured using accuracy, latency, workflow completion, reliability, tool-call success, and agent-level performance. The final system will provide an interactive dashboard with warehouse status, agent activity, alerts, and workflow traces.
+
+
+
+
+
+
+
+
+
+
+
+
+1.2 Methodology
+
+
+
+
+  
+
+
+
+
+
+1. Problem Definition & Requirement Analysis
+* Identify key warehouse workflows: inventory, procurement, dispatch, and invoice processing.
+* Define each agent’s role, tools, inputs, outputs, and interactions.
+
+
+2. Database & Backend Development
+* Develop a PostgreSQL database for inventory, suppliers, orders, invoices, and workflow records.
+* Build APIs for data access and warehouse operations.
+
+
+3. Specialized Agent Development
+* Implement Inventory, Procurement, Dispatch, and Invoice Agents with domain-specific tools.
+* Test each agent independently before integration.
+
+
+4. RAG Knowledge System
+* Build a knowledge base from SOPs, policies, and warehouse procedures.
+* Implement chunking, embeddings, vector storage, and retrieval.
+
+
+5. MCP & Tool Integration
+* Expose warehouse operations through an MCP server.
+* Enable agents to perform controlled actions such as stock checks, reservations, purchase orders, and invoice validation.
+
+
+6. Agent Orchestration & Communication
+* Implement a Supervisor Agent to coordinate specialized agents and workflows.
+* Evaluate sequential, hierarchical, and event-driven execution patterns.
+
+
+7. Invoice Intelligence
+* Extract invoice details from PDFs/images using OCR or vision-based processing.
+* Match invoices with purchase orders and identify quantity, price, or product mismatches.
+
+
+8. Evaluation & Experiments
+* Test the system using 40+ warehouse scenarios.
+* Measure accuracy, latency, reliability, workflow completion, and tool-call success.
+
+
+9. Observability & Logging
+* Record agent actions, tool calls, latency, errors, and workflow status.
+* Analyse agent-level performance and system bottlenecks.
+
+
+10. Dashboard & Integration
+* Develop a dashboard for inventory, procurement, dispatch, invoices, alerts, and agent activity.
+* Integrate all components into an end-to-end WareMind AI prototype.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* Section 2 : Project Plan and Division of Work
+
+
+2.1 Project Plan
+
+
+
+
+Phase
+	Activities
+	Phase 1
+	Problem definition, requirements, system architecture and database design
+	Phase 2
+	Develop Inventory and Procurement modules
+	Phase 3
+	Develop Dispatch and Order Fulfilment modules
+	Phase 4
+	Develop Invoice Processing and Document Intelligence
+	Phase 5
+	Integrate RAG, MCP and agent-to-agent communication
+	Phase 6
+	Develop Supervisor Agent and multi-agent orchestration
+	Phase 7
+	Implement sequential, hierarchical and event-driven workflows
+	Phase 8
+	Dashboard, logging and observability
+	Phase 9
+	40+ scenario testing and performance evaluation
+	Phase 10
+	Final integration, documentation and presentation
+	
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2.2 Project Architecture
+
+
+  
+
+
+
+
+
+
+
+
+
+2.3 Division of work
+The core contribution will therefore be approximately divided as:
+Member
+	Primary Ownership
+	Major Agents/Components
+	Yuvraj
+	Inventory & Procurement
+	Inventory Agent + Procurement Agent
+	Nandini
+	Dispatch & Orchestration
+	Dispatch Agent + Supervisor Agent
+	Shivi
+	Invoice & AI Infrastructure
+	Invoice Agent + RAG + MCP
+	
+
+
+
+
+
+
+
+
+
+* Section 3: Individual Understanding
+
+
+* Member 1- YUVRAJ
+I will understand how inventory and procurement are managed within the proposed multi-agent warehouse management system. I will study how the Inventory Agent monitors product stock levels, reserved quantities, minimum stock limits, and inventory updates, and how it identifies low-stock or out-of-stock situations. I will also understand how the Procurement Agent responds to stock shortages by checking supplier information, prices, delivery times, existing purchase orders, and procurement policies before deciding the required replenishment quantity. Through this work, I will gain an understanding of inventory management, supplier selection, purchase-order generation, stock replenishment, and the communication between the Inventory and Procurement Agents.
+* Develop the Inventory Agent for monitoring and managing warehouse stock.
+* Implement inventory operations such as:
+   * Checking current stock
+   * Checking reserved stock
+   * Updating inventory quantities
+   * Reserving and releasing stock
+   * Identifying low-stock products
+* Develop the Procurement Agent for handling stock replenishment.
+* Implement supplier management and supplier information retrieval.
+* Develop functionality to compare suppliers based on:
+   * Product availability
+   * Price
+   * Delivery/lead time
+   * Existing supplier information
+* Implement purchase-order creation and management.
+* Calculate the required replenishment quantity based on current stock, minimum stock, target stock, and relevant warehouse policies.
+* Integrate Inventory and Procurement Agents so that a low-stock event can trigger a procurement request.
+* Implement database components related to products, inventory, suppliers, and purchase orders.
+* Develop and test tools such as get_inventory, update_inventory, get_supplier, and create_purchase_order.
+* Test scenarios involving normal stock, low stock, out-of-stock products, multiple suppliers, pending purchase orders, and replenishment requirements.
+* Document the Inventory and Procurement workflows, tools, database components, and testing results.
+
+
+
+
+* MEMBER 2- NANDINI
+I will understand the customer order fulfilment and dispatch workflow of the proposed multi-agent warehouse management system. I will study how customer orders are received and validated, how product availability is checked against current and reserved inventory, and how orders are processed for complete or partial fulfillment. I will also understand how the Dispatch Agent communicates with the Inventory, Procurement, and Supervisor Agents when sufficient stock is not available. Through this work, I will gain an understanding of stock reservation, order status management, fulfilment decisions, and agent-to-agent communication within the warehouse system.
+
+
+* Develop the Dispatch Agent for handling customer order fulfilment.
+* Implement customer order management, including order validation and retrieval of order details.
+* Integrate inventory availability checks for ordered products and quantities.
+* Implement stock reservation to allocate available products to customer orders.
+* Handle complete, partial, and unavailable fulfilment cases.
+* Detect stock shortages and send a STOCK_REQUIRED request to the Procurement Agent.
+* Implement agent-to-agent communication between Dispatch, Inventory, Procurement, and Supervisor Agents.
+* Update order and dispatch status after each fulfilment stage.
+* Test scenarios such as sufficient stock, insufficient stock, multiple-product orders, partial fulfilment, and cancelled orders.
+* Document the Dispatch Agent workflow, tools, communication flow, and test results.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* MEMBER 3- SHIVI 
+I will understand how the Invoice Agent processes supplier invoices and connects invoice information with the warehouse system. I will study how invoice data is extracted from PDF or image documents, how the extracted details are validated against purchase orders, and how mismatches in product, quantity, price, or total amount are identified. I will also understand how RAG can provide relevant warehouse policies and procedures to the agents and how MCP can be used to provide controlled access to warehouse tools and services. Through this work, I will gain an understanding of document intelligence, knowledge retrieval, tool integration, and their role in enabling effective communication between different agents in the multi-agent warehouse system.
+
+
+* Develop the Invoice Agent for processing supplier invoices.
+* Implement invoice document extraction from PDF/image files using OCR or vision-based processing.
+* Extract important invoice information such as:
+   * Invoice number
+   * Supplier details
+   * Product names/SKUs
+   * Quantities
+   * Unit prices
+   * Total amount
+* Implement invoice-to-purchase-order matching.
+* Identify mismatches such as incorrect quantity, price, product, or total amount.
+* Develop the RAG knowledge system using warehouse SOPs, procurement policies, invoice policies, and related documents.
+* Implement document chunking, embeddings, vector storage, and retrieval.
+* Develop the MCP server to expose controlled warehouse tools to the agents.
+* Integrate tools such as invoice validation, purchase-order retrieval, inventory updates, and invoice-status updates.
+* Support communication between the Invoice Agent, Inventory Agent, Procurement Agent, and Supervisor Agent.
+* Test invoice scenarios such as correct invoices, quantity mismatches, price mismatches, missing products, duplicate invoices, and unreadable documents.
+* Document the Invoice Agent, RAG pipeline, MCP integration, workflows, and testing results.
