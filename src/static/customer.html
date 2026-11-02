@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WareSync - Customer Storefront & Portal</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .storefront-container { width: 100%; padding: 24px; }
+    .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+    .product-card { padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+    .product-price { font-size: 1.3rem; font-weight: 800; color: var(--accent-cyan); }
+    .stock-pill { padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; width: fit-content; }
+    .chat-bubble { padding: 12px 16px; border-radius: var(--radius-sm); margin-top: 10px; line-height: 1.5; font-size: 0.85rem; }
+    .chat-bubble.agent { background: rgba(0, 240, 255, 0.08); border-left: 3px solid var(--accent-cyan); color: var(--text-main); }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <div class="brand-icon">W</div>
+        <div>
+          <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
+          <span class="brand-badge" style="font-size: 0.6rem;">Storefront Hub</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link" title="Operations Cockpit">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Operations Cockpit</span>
+        </a>
+        <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
+          <span class="nav-icon">🧩</span>
+          <span class="nav-text">Microservices Fleet</span>
+        </a>
+        <a href="/metrics.html" class="sidebar-link" title="Grafana Telemetry & Live Graphs">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grafana Telemetry</span>
+        </a>
+        <a href="/customer.html" class="sidebar-link active" title="Customer Storefront">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">API Swagger Docs</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/" class="btn btn-secondary" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.75rem; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <span class="btn-icon">⬅</span> <span class="btn-label">Back to Operations</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN OPERATIONAL STAGE -->
+  <div class="app-main">
+    <header class="app-topbar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
+        <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">B2B Autonomous Ordering Portal</span>
+        <span class="stock-pill" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.65rem;">● Connected</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="/" class="btn btn-secondary" style="text-decoration: none; font-size: 0.75rem; padding: 5px 12px;">
+          ⚙️ Admin Operations
+        </a>
+      </div>
+    </header>
+
+    <main class="storefront-container">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Warehouse Product Catalog</h2>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Select an industrial component to check live stock, inquire with the ADK Inventory Agent, and confirm dispatch.</p>
+      </div>
+
+      <!-- Active Products Catalog -->
+      <div class="catalog-grid" id="customer-catalog-grid">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <!-- Live Customer Conversation & Confirmation Modal / Drawer -->
+      <div id="customer-order-drawer" class="glass-panel" style="display: none; margin-top: 30px; padding: 24px; border: 1px solid var(--accent-cyan);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 id="drawer-item-title" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">Inquiry: SKU-1002</h3>
+          <button id="btn-close-drawer" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">✕ Close</button>
+        </div>
+
+        <div class="chat-bubble agent" id="drawer-chat-bubble">
+          Checking inventory with the ADK Inventory Agent...
+        </div>
+
+        <div id="drawer-actions-row" style="display: flex; gap: 12px; margin-top: 16px;">
+          <button id="btn-drawer-confirm-order" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; font-size: 0.9rem;">
+            ✅ Confirm & Place Order Now
+          </button>
+        </div>
+
+        <!-- Generated Documents Result Box -->
+        <div id="drawer-order-success" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-glass);">
+          <div id="drawer-success-msg" style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 700; margin-bottom: 8px;">Order Successfully Dispatched & Cryptographically Signed!</div>
+          <div id="drawer-docs-row" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+        </div>
+      </div>
+
+      <!-- Customer Invoices & Challans Archive -->
+      <section style="margin-top: 36px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Issued Delivery Challans & Invoices</h3>
+          <button id="btn-cust-refresh-invoices" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">↻ Refresh Docs</button>
+        </div>
+        <div id="customer-invoices-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+          <div style="color: var(--text-dim); font-size: 0.85rem;">Loading issued documents...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- PDF Preview Modal for Customer Storefront -->
+  <div id="cust-pdf-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-md); width: 100%; max-width: 900px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.7);">
+      <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+        <span style="font-weight: 700; font-size: 0.95rem; color: #fff;" id="cust-modal-doc-title">Document Preview</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <a id="cust-modal-download-btn" href="#" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;">⬇ Download PDF</a>
+          <button id="btn-cust-close-modal" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">✕ Close</button>
+        </div>
+      </div>
+      <div style="flex: 1; position: relative;">
+        <iframe id="cust-modal-iframe" src="about:blank" style="width: 100%; height: 100%; border: none; background: #fff;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/customer_portal.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("sidebar-toggle-btn");
+      const sb = document.getElementById("app-sidebar");
+      if (toggle && sb) {
+        toggle.addEventListener("click", () => sb.classList.toggle("expanded"));
+        document.addEventListener("click", (e) => {
+          if (!sb.contains(e.target) && !toggle.contains(e.target)) sb.classList.remove("expanded");
+        });
+      }
+    });
+  </script>
+</body>
+</html>

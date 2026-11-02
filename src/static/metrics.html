@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WareSync AI - Grafana Visual Observability & Live Metrics</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Chart.js Open-Source Interactive Timeseries Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    .grafana-container { padding: 24px; overflow-y: auto; width: 100%; }
+    .grafana-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 16px; }
+    .grafana-panel { padding: 16px; display: flex; flex-direction: column; min-height: 280px; position: relative; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .panel-title { font-size: 0.88rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .panel-sub { font-size: 0.7rem; color: var(--text-dim); }
+    .chart-box { flex: 1; position: relative; width: 100%; height: 100%; min-height: 200px; }
+    .stat-box { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; }
+    .stat-val { font-size: 2.2rem; font-weight: 800; font-family: var(--font-mono); }
+    .stat-unit { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .col-3 { grid-column: span 3; }
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+    @media (max-width: 1200px) { .col-3, .col-4 { grid-column: span 6; } .col-6, .col-8 { grid-column: span 12; } }
+    @media (max-width: 768px) { .col-3, .col-4, .col-6, .col-8, .col-12 { grid-column: span 12; } }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <div class="brand-icon">W</div>
+        <div>
+          <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
+          <span class="brand-badge" style="font-size: 0.6rem;">Grafana Metrics</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link" title="Operations Cockpit">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Operations Cockpit</span>
+        </a>
+        <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
+          <span class="nav-icon">🧩</span>
+          <span class="nav-text">Microservices Fleet</span>
+        </a>
+        <a href="/metrics.html" class="sidebar-link active" title="Grafana Telemetry & Live Graphs">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grafana Telemetry</span>
+        </a>
+        <a href="/customer.html" class="sidebar-link" title="Customer Storefront">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">API Swagger Docs</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/" class="btn btn-secondary" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.75rem; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <span class="btn-icon">⬅</span> <span class="btn-label">Back to Operations</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN OPERATIONAL STAGE -->
+  <div class="app-main">
+    <header class="app-topbar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
+        <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">Visual Observability & Grafana Telemetry</span>
+        <span class="stock-pill" style="background: rgba(0, 240, 255, 0.15); color: var(--accent-cyan); font-size: 0.65rem;">● Live Prometheus Stream</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="/api/metrics/prometheus" target="_blank" class="btn btn-secondary" style="text-decoration: none; font-size: 0.75rem; padding: 5px 12px;">
+          📊 Raw Prometheus Metrics
+        </a>
+        <button id="btn-refresh-metrics" class="btn btn-primary" style="font-size: 0.75rem; padding: 5px 12px; font-weight: 700;">
+          ↻ Refresh (Live: 3s)
+        </button>
+      </div>
+    </header>
+
+    <main class="grafana-container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+        <div>
+          <h1 style="font-size: 1.35rem; font-weight: 800; color: #fff;">Live Grafana Performance Dashboards</h1>
+          <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Real-time Prometheus timeseries metrics: LLM latency, token throughput, microservices fleet health, and stock trends.</p>
+        </div>
+      </div>
+
+      <!-- ROW 1: Single Stat KPI Gauges -->
+      <div class="grafana-grid" style="margin-top: 0;">
+        <div class="glass-panel grafana-panel col-3">
+          <div class="panel-header">
+            <span class="panel-title">⚡ Average Latency</span>
+            <span class="panel-sub">p95 Trace Time</span>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="stat-latency" style="color: var(--accent-cyan);">0.0</div>
+            <div class="stat-unit">Milliseconds</div>
+          </div>
+        </div>
+
+        <div class="glass-panel grafana-panel col-3">
+          <div class="panel-header">
+            <span class="panel-title">🪙 Tokens Consumed</span>
+            <span class="panel-sub">LLM Inference</span>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="stat-tokens" style="color: var(--accent-purple);">0</div>
+            <div class="stat-unit">Total Tokens</div>
+          </div>
+        </div>
+
+        <div class="glass-panel grafana-panel col-3">
+          <div class="panel-header">
+            <span class="panel-title">🛡️ Fleet Availability</span>
+            <span class="panel-sub">11 Microservices</span>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="stat-uptime" style="color: var(--accent-emerald);">100%</div>
+            <div class="stat-unit" id="stat-fleet-detail">11 / 11 Active</div>
+          </div>
+        </div>
+
+        <div class="glass-panel grafana-panel col-3">
+          <div class="panel-header">
+            <span class="panel-title">🔄 Total Workflows</span>
+            <span class="panel-sub">Autonomous Runs</span>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="stat-runs" style="color: var(--accent-blue);">0</div>
+            <div class="stat-unit">Cycles Executed</div>
+          </div>
+        </div>
+
+        <!-- ROW 2: API Calls Over Time & Workflow Latency -->
+        <div class="glass-panel grafana-panel col-6">
+          <div class="panel-header">
+            <span class="panel-title">⏱️ API Calls Over Time (Request Rate)</span>
+            <span class="framework-tag mcp">Per-Microservice Color Lines</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-api-calls"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel grafana-panel col-6">
+          <div class="panel-header">
+            <span class="panel-title">📈 Workflow Execution Latency Timeseries</span>
+            <span class="framework-tag mcp">Prometheus timeseries</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-latency"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 3: Microservice Status by Service & Real-Time Inventory -->
+        <div class="glass-panel grafana-panel col-6">
+          <div class="panel-header">
+            <span class="panel-title">🛡️ Microservice Fleet Status & Outage Map</span>
+            <span class="framework-tag mcp">Green = Active | Red = Toggled Down</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-fleet-status"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-panel grafana-panel col-6">
+          <div class="panel-header">
+            <span class="panel-title">📦 Real-Time Warehouse Inventory Telemetry</span>
+            <span class="panel-sub">Available vs Safety Stock</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-inventory"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/metrics_dashboard.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("sidebar-toggle-btn");
+      const sb = document.getElementById("app-sidebar");
+      if (toggle && sb) {
+        toggle.addEventListener("click", () => sb.classList.toggle("expanded"));
+        document.addEventListener("click", (e) => {
+          if (!sb.contains(e.target) && !toggle.contains(e.target)) sb.classList.remove("expanded");
+        });
+      }
+    });
+  </script>
+</body>
+</html>

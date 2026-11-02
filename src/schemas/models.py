@@ -152,6 +152,8 @@ class BlackboardState(BaseModel):
     active_orders: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     purchase_orders: Dict[str, PurchaseOrderProposal] = Field(default_factory=dict)
     invoices: Dict[str, InvoiceAuditResult] = Field(default_factory=dict)
+    approval_mode: str = "AUTO"  # "AUTO" or "MANUAL"
+    pending_approvals: List[Dict[str, Any]] = Field(default_factory=list)
 
     # Cross-Agent Event Queue & Traces
     pending_events: List[A2AMessage] = Field(default_factory=list)

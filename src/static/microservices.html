@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WareSync AI - Active Microservices & Agent Fleet Registry</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="app-layout">
+
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <div class="brand-icon">W</div>
+        <div>
+          <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
+          <span class="brand-badge" style="font-size: 0.6rem;">Microservices Hub</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link" title="Operations Cockpit">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Operations Cockpit</span>
+        </a>
+        <a href="/microservices.html" class="sidebar-link active" title="Microservices Fleet">
+          <span class="nav-icon">🧩</span>
+          <span class="nav-text">Microservices Fleet</span>
+        </a>
+        <a href="/metrics.html" class="sidebar-link" title="Grafana Telemetry & Live Graphs">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grafana Telemetry</span>
+        </a>
+        <a href="/customer.html" class="sidebar-link" title="Customer Storefront">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">API Swagger Docs</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/" class="btn btn-secondary" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.75rem; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <span class="btn-icon">⬅</span> <span class="btn-label">Back to Operations</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN OPERATIONAL STAGE -->
+  <div class="app-main">
+    <header class="app-topbar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
+        <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">Microservices & Tool Architecture</span>
+        <span class="stock-pill" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.65rem;">11 Active Microservices</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="resetFleet()" class="btn btn-secondary" style="font-size: 0.75rem; padding: 5px 12px; cursor: pointer;">
+          ↻ Restore All Fleet
+        </button>
+        <a href="/docs" target="_blank" class="btn btn-primary" style="text-decoration: none; padding: 5px 12px; font-size: 0.75rem; font-weight: 700;">
+          Interactive Swagger UI ➔
+        </a>
+      </div>
+    </header>
+
+    <div style="padding: 24px; overflow-y: auto;">
+      <section style="margin-bottom: 20px;">
+        <h1 style="font-size: 1.35rem; font-weight: 800; color: #fff; margin-bottom: 6px;">
+          🧩 Active Microservices & Distributed Agent Fleet
+        </h1>
+        <p style="font-size: 0.82rem; color: var(--text-muted); max-width: 800px; line-height: 1.5;">
+          WareSync AI operates 11 modular microservices coordinating autonomously across Google ADK, CrewAI, FastMCP, ReportLab, and FastAPI. Click <strong>⚡ Simulate Down</strong> on any service to test live circuit-breaking and degraded failover.
+        </p>
+      </section>
+
+      <!-- Live Outage Notification Banner -->
+      <div id="outage-alert-banner" style="display: none; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.82rem; font-weight: 600;"></div>
+
+      <div id="services-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;">
+        <div style="color: var(--text-dim); padding: 16px;">Loading registered microservices fleet...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadMicroservices() {
+      const grid = document.getElementById("services-grid");
+      try {
+        const res = await fetch("/api/microservices");
+        const data = await res.json();
+        const services = data.microservices || [];
+        grid.innerHTML = "";
+        services.forEach(ms => {
+          const card = document.createElement("div");
+          const isADK = ms.framework.includes("ADK");
+          const isCrew = ms.framework.includes("CrewAI");
+          const tagClass = isADK ? "adk" : (isCrew ? "crewai" : "mcp");
+          const isDown = ms.status === "DOWN";
+          card.className = "glass-panel";
+          card.style.cssText = `padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; border-radius: var(--radius-md); ${isDown ? "border-color: rgba(244,63,94,0.6); box-shadow: 0 0 15px rgba(244,63,94,0.15);" : ""}`;
+          
+          let toolsHtml = "";
+          if (ms.tools && ms.tools.length > 0) {
+            toolsHtml = `<div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 6px;">
+              <strong>Tools:</strong> ${ms.tools.map(t => `<code style="background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 3px; font-family: var(--font-mono);">${t}</code>`).join(" ")}
+            </div>`;
+          }
+          let endpointsHtml = "";
+          if (ms.endpoints && ms.endpoints.length > 0) {
+            endpointsHtml = `<div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 6px;">
+              <strong>Endpoints:</strong> ${ms.endpoints.map(e => `<code style="color: var(--accent-cyan);">${e}</code>`).join(", ")}
+            </div>`;
+          }
+
+          const statusColor = isDown ? "var(--accent-rose)" : "var(--accent-emerald)";
+          const statusText = isDown ? "🔴 DOWN (Outage)" : "● ACTIVE";
+          const btnText = isDown ? "🟢 Restore Service" : "⚡ Simulate Down";
+          const btnStyle = isDown ? "background: rgba(16,185,129,0.15); border: 1px solid var(--accent-emerald); color: var(--accent-emerald);" : "background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.4); color: var(--accent-rose);";
+
+          card.innerHTML = `
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #fff;">${ms.name}</h3>
+                <span class="framework-tag ${tagClass}" style="font-size: 0.65rem;">${ms.framework}</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">${ms.type}</div>
+              ${toolsHtml}
+              ${endpointsHtml}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-glass); padding-top: 10px; margin-top: 8px; font-size: 0.75rem;">
+              <span style="color: ${statusColor}; font-weight: 700;">${statusText}</span>
+              <button onclick="toggleService('${ms.id}')" style="${btnStyle} font-size: 0.7rem; padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700;">
+                ${btnText}
+              </button>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch(e) {
+        grid.innerHTML = '<div style="color: var(--accent-rose);">Failed to load microservices.</div>';
+      }
+    }
+    window.toggleService = async function(id) {
+      try {
+        const res = await fetch(`/api/microservices/${id}/toggle`, { method: "POST" });
+        const data = await res.json();
+        const banner = document.getElementById("outage-alert-banner");
+        if (banner && data.service) {
+          const isDown = data.service.status === "DOWN";
+          banner.style.display = "block";
+          banner.style.background = isDown ? "rgba(244, 63, 94, 0.12)" : "rgba(16, 185, 129, 0.12)";
+          banner.style.border = `1px solid ${isDown ? "var(--accent-rose)" : "var(--accent-emerald)"}`;
+          banner.style.color = isDown ? "var(--accent-rose)" : "var(--accent-emerald)";
+          banner.innerHTML = isDown
+            ? `⚠️ <strong>OUTAGE SIMULATION ACTIVE:</strong> Microservice [${data.service.name}] is now <strong>DOWN</strong>. Warehouse workflows will activate circuit-breaker fallback.`
+            : `🟢 <strong>FLEET RECOVERY:</strong> Microservice [${data.service.name}] is restored to <strong>ACTIVE</strong> operational state.`;
+        }
+        await loadMicroservices();
+      } catch (err) { console.error("Toggle error:", err); }
+    };
+    window.resetFleet = async function() {
+      await fetch("/api/reset", { method: "POST" });
+      const banner = document.getElementById("outage-alert-banner");
+      if (banner) {
+        banner.style.display = "block";
+        banner.style.background = "rgba(16, 185, 129, 0.12)";
+        banner.style.border = "1px solid var(--accent-emerald)";
+        banner.style.color = "var(--accent-emerald)";
+        banner.innerHTML = "🟢 All microservices in the distributed fleet have been restored to ACTIVE status.";
+      }
+      await loadMicroservices();
+    };
+    document.addEventListener("DOMContentLoaded", () => {
+      loadMicroservices();
+      const toggle = document.getElementById("sidebar-toggle-btn");
+      const sb = document.getElementById("app-sidebar");
+      if (toggle && sb) {
+        toggle.addEventListener("click", () => sb.classList.toggle("expanded"));
+        document.addEventListener("click", (e) => {
+          if (!sb.contains(e.target) && !toggle.contains(e.target)) sb.classList.remove("expanded");
+        });
+      }
+    });
+  </script>
+</body>
+</html>

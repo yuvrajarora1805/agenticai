@@ -7,38 +7,81 @@
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="app-layout">
 
-  <!-- Top Navigation Header -->
-  <header class="app-header">
-    <div class="header-brand">
-      <div class="brand-icon">W</div>
-      <div>
-        <span class="brand-title">WareSync AI</span>
-        <span class="brand-badge">Blackboard Core</span>
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <div class="brand-icon">W</div>
+        <div>
+          <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
+          <span class="brand-badge" style="font-size: 0.6rem;">Blackboard Core</span>
+        </div>
       </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link active" title="Operations Cockpit">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Operations Cockpit</span>
+        </a>
+        <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
+          <span class="nav-icon">🧩</span>
+          <span class="nav-text">Microservices Fleet</span>
+        </a>
+        <a href="/metrics.html" class="sidebar-link" title="Grafana Telemetry & Live Graphs">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grafana Telemetry</span>
+        </a>
+        <a href="/customer.html" class="sidebar-link" title="Customer Storefront">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">API Swagger Docs</span>
+        </a>
+      </nav>
     </div>
-    
-    <div class="header-status-group">
-      <div class="status-pill">
-        <span class="status-dot"></span>
-        <span id="ws-status-text">Blackboard Live</span>
-      </div>
-      <div class="status-pill">
-        <span style="color: var(--text-dim);">Frameworks:</span>
-        <span class="framework-tag crewai">CrewAI</span>
-        <span class="framework-tag adk">ADK</span>
-      </div>
-      <button class="btn-preset" id="btn-reset-state" style="padding: 5px 12px; margin: 0; font-size: 0.75rem;">
-        ↻ Reset State
+
+    <div class="sidebar-footer">
+      <div class="footer-text" style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px;">OPERATING MODE</div>
+      <button id="btn-toggle-approval-mode" class="btn" title="Toggle Auto/Manual Mode" style="width: 100%; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); font-size: 0.75rem; padding: 6px 10px; cursor: pointer; border-radius: var(--radius-sm); font-weight: 700; text-align: center;">
+        <span class="btn-icon">⚡</span> <span class="btn-label">Auto-Pilot Active</span>
+      </button>
+      <button class="btn-preset" id="btn-reset-state" title="Reset Simulation State" style="width: 100%; text-align: center; justify-content: center; font-size: 0.75rem; padding: 6px 10px; margin-top: 4px;">
+        <span class="btn-icon">↻</span> <span class="btn-label">Reset State</span>
       </button>
     </div>
-  </header>
+  </aside>
 
-  <!-- Main 3-Column Operations Grid -->
-  <main class="dashboard-grid">
+  <!-- MAIN OPERATIONAL STAGE -->
+  <div class="app-main">
+    <!-- Topbar with status indicators -->
+    <header class="app-topbar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
+        <span style="font-size: 0.82rem; font-weight: 700; color: #fff;">Warehouse Command Center</span>
+        <span class="stock-pill" style="background: rgba(0, 240, 255, 0.1); color: var(--accent-cyan); font-size: 0.65rem;">v2.0 Titanium</span>
+      </div>
+      
+      <div class="header-status-group">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span id="ws-status-text">Blackboard Live</span>
+        </div>
+        <div class="status-pill">
+          <span style="color: var(--text-dim); font-size: 0.72rem;">Agents:</span>
+          <span class="framework-tag crewai">CrewAI</span>
+          <span class="framework-tag adk">ADK</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main 3-Column Operations Grid -->
+    <main class="dashboard-grid">
 
     <!-- LEFT PANEL: Control Center & Scenarios -->
     <section class="control-panel">
@@ -104,6 +147,41 @@
         <button id="btn-run-workflow" class="btn-primary">Execute Workflow</button>
       </div>
 
+      <!-- Interactive Customer Storefront & Factory Restock Panel -->
+      <div class="glass-panel card-content">
+        <div class="section-title">
+          <span>🛒 Customer Storefront & Hub Restock</span>
+          <span class="framework-tag adk" style="font-size: 0.65rem;">Conversational</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px;">
+          Simulate a real customer inquiry, stock check, confirmation, Delivery Challan, and Factory Bulk Order.
+        </div>
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+          <select id="cust-sku-select" class="select-box" style="flex: 2; font-size: 0.75rem;">
+            <option value="SKU-1002">SKU-1002 (Forklift Valve - $45)</option>
+            <option value="SKU-1001">SKU-1001 (Conveyor Belt - $250)</option>
+            <option value="SKU-1003">SKU-1003 (Barcode Scanner - $85)</option>
+          </select>
+          <input type="number" id="cust-qty-input" class="input-box" value="15" min="1" max="500" style="flex: 1; padding: 6px; font-size: 0.75rem;" placeholder="Qty">
+        </div>
+        <button id="btn-cust-check-stock" class="btn btn-secondary" style="width: 100%; font-size: 0.75rem; padding: 6px; margin-bottom: 8px;">
+          🔍 1. Inquire & Check Stock
+        </button>
+
+        <div id="cust-chat-response-box" style="display: none; padding: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); font-size: 0.75rem; margin-bottom: 8px; line-height: 1.4;">
+          <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 4px;">Warehouse Agent:</div>
+          <div id="cust-chat-message-text" style="color: var(--text-main);">...</div>
+          <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <button id="btn-cust-confirm-yes" class="btn btn-primary" style="flex: 1; font-size: 0.7rem; padding: 4px;">✅ Confirm & Place Order</button>
+            <button id="btn-cust-cancel" class="btn btn-secondary" style="font-size: 0.7rem; padding: 4px 8px;">✕ Cancel</button>
+          </div>
+        </div>
+
+        <button id="btn-factory-restock" class="btn btn-secondary" style="width: 100%; font-size: 0.75rem; padding: 6px; border-color: var(--accent-purple); color: var(--accent-purple);">
+          🏭 2. Place Bulk Factory Restock (+50 Units)
+        </button>
+      </div>
+
       <!-- Security Guardrails Status Card -->
       <div class="glass-panel card-content">
         <div class="section-title">
@@ -124,9 +202,9 @@
       <div class="glass-panel blackboard-container">
         <div class="blackboard-meta-bar">
           <div>
-            <h2 style="font-size: 1rem; font-weight: 700;">Hover Blackboard Shared State</h2>
+            <h2 style="font-size: 1rem; font-weight: 700; color: #fff;">Hover Blackboard Shared State</h2>
             <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">
-              Session ID: <span id="blackboard-session-id" style="font-family: var(--font-mono); color: var(--text-muted);">loading...</span>
+              Session ID: <span id="blackboard-session-id" style="font-family: var(--font-mono); color: var(--accent-cyan);">loading...</span>
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
@@ -135,44 +213,82 @@
           </div>
         </div>
 
-        <!-- Inventory State Table -->
-        <div class="section-title">
-          <span>Warehouse Stock Context</span>
-          <span style="font-size: 0.7rem; color: var(--accent-cyan);">Shared Cache</span>
+        <!-- Center Column Navigation Tabs -->
+        <div class="nav-tabs-bar">
+          <button class="tab-btn active" data-tab="tab-stock">📦 Inventory & Orders</button>
+          <button class="tab-btn" data-tab="tab-docs">📄 Live PDF Documents</button>
+          <button class="tab-btn" data-tab="tab-fleet">🧩 Microservices & A2A</button>
         </div>
-        <table class="table-custom">
-          <thead>
-            <tr>
-              <th>SKU</th>
-              <th>Product Name</th>
-              <th>Available</th>
-              <th>Reserved</th>
-              <th>Safety Limit</th>
-              <th>Unit Cost</th>
-            </tr>
-          </thead>
-          <tbody id="inventory-tbody">
-            <!-- Dynamically populated via WebSocket -->
-          </tbody>
-        </table>
 
-        <!-- Active Purchase Orders / Discrepancy Alerts -->
-        <div class="section-title" style="margin-top: 20px;">
-          <span>Active Purchase Orders & Invoices</span>
-        </div>
-        <div id="po-invoices-container" style="display: flex; flex-direction: column; gap: 8px;">
-          <div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">No pending purchase orders or discrepancies in blackboard.</div>
-        </div>
-      </div>
+        <!-- TAB 1: Inventory & Orders -->
+        <div id="tab-stock" class="tab-pane active">
+          <!-- Pending Approvals Widget (Human-in-the-Loop) -->
+          <div id="pending-approvals-card" style="display: none; background: rgba(245, 158, 11, 0.12); border: 1px solid var(--accent-amber); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="color: var(--accent-amber); font-weight: 700; font-size: 0.85rem;">✋ Manual Approval Required</span>
+              <span id="pending-count-badge" class="stock-pill" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; font-size: 0.65rem;">0 Actions</span>
+            </div>
+            <div id="pending-approvals-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
 
-      <!-- Cross-Framework A2A Protocol Flow Visualizer -->
-      <div class="glass-panel a2a-visualizer">
-        <div class="section-title">
-          <span>🌐 A2A Cross-Framework Message Channel</span>
-          <span style="font-size: 0.7rem; color: var(--text-muted);">Protocol v1.0</span>
+          <div class="section-title">
+            <span>Warehouse Stock Context</span>
+            <span style="font-size: 0.7rem; color: var(--accent-cyan);">Shared Cache</span>
+          </div>
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Product Name</th>
+                <th>Available</th>
+                <th>Reserved</th>
+                <th>Safety Limit</th>
+                <th>Unit Cost</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-tbody">
+              <!-- Dynamically populated via WebSocket -->
+            </tbody>
+          </table>
+
+          <div class="section-title" style="margin-top: 20px;">
+            <span>Active Purchase Orders & Customer Orders</span>
+          </div>
+          <div id="po-invoices-container" style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">No pending customer orders, purchase orders, or discrepancies.</div>
+          </div>
         </div>
-        <div id="a2a-message-stream" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
-          <div style="font-size: 0.8rem; color: var(--text-dim);">Awaiting cross-framework agent triggers (CrewAI ↔ ADK)...</div>
+
+        <!-- TAB 2: Generated PDF Invoices & Delivery Challans -->
+        <div id="tab-docs" class="tab-pane">
+          <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📄 Live PDF Invoices (Supplier AP & Customer AR)</span>
+            <button id="btn-refresh-invoices" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;">Refresh</button>
+          </div>
+          <div id="invoice-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 6px; max-height: 480px; overflow-y: auto;">
+            <div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">Loading generated PDF documents...</div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Microservices Fleet & A2A Visualizer -->
+        <div id="tab-fleet" class="tab-pane">
+          <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🧩 Active Microservices & Agent Fleet</span>
+            <span class="stock-pill" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.65rem;">11 Services Active</span>
+          </div>
+          <div id="microservices-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-top: 8px; max-height: 240px; overflow-y: auto;">
+            <div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">Loading registered microservices...</div>
+          </div>
+
+          <div class="section-title" style="margin-top: 20px;">
+            <span>🌐 A2A Cross-Framework Message Channel</span>
+            <span style="font-size: 0.7rem; color: var(--text-muted);">Protocol v1.0</span>
+          </div>
+          <div id="a2a-message-stream" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+            <div style="font-size: 0.8rem; color: var(--text-dim);">Awaiting cross-framework agent triggers (CrewAI ↔ ADK)...</div>
+          </div>
         </div>
       </div>
     </section>
@@ -183,7 +299,7 @@
       <div class="glass-panel card-content">
         <div class="section-title">
           <span>📊 Observability Telemetry</span>
-          <span style="color: var(--accent-cyan); font-size: 0.75rem;">Langfuse Mock</span>
+          <span id="langfuse-badge" style="color: var(--accent-cyan); font-size: 0.75rem; font-weight: 700;">Langfuse Active</span>
         </div>
         <div class="kpi-row">
           <div class="kpi-card">
@@ -202,6 +318,10 @@
             <span class="kpi-label">Estimated Cost</span>
             <span class="kpi-value" id="kpi-cost">$0.000</span>
           </div>
+        </div>
+        <div id="langfuse-trace-link-box" style="margin-top: 10px; padding: 6px 10px; background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: var(--radius-sm); font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-dim);">Trace ID: <span id="current-trace-id" style="font-family: var(--font-mono); color: var(--accent-cyan);">None (Run a scenario)</span></span>
+          <a id="btn-view-langfuse-trace" href="/api/traces" target="_blank" style="color: var(--accent-emerald); font-weight: 700; text-decoration: none;">View Trace Spans ➔</a>
         </div>
       </div>
 
@@ -259,6 +379,26 @@
       <div class="log-entry" style="color: var(--text-dim);">System initialized. Listening to Hover Blackboard lifecycle events...</div>
     </div>
   </footer>
+  </div> <!-- Close app-main -->
+
+  <!-- PDF Preview Modal -->
+  <div id="pdf-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-md); width: 100%; max-width: 900px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+      <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+        <div>
+          <span style="font-weight: 700; font-size: 0.95rem;" id="modal-invoice-title">Invoice Preview</span>
+          <span id="modal-invoice-badge" class="framework-tag mcp" style="margin-left: 8px;">PDF Document</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <a id="modal-download-link" href="#" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;">Download PDF</a>
+          <button id="btn-close-modal" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">✕ Close</button>
+        </div>
+      </div>
+      <div style="flex: 1; position: relative;">
+        <iframe id="pdf-preview-iframe" src="about:blank" style="width: 100%; height: 100%; border: none; background: #fff;"></iframe>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/js/dashboard.js"></script>
 </body>

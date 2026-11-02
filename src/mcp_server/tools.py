@@ -87,8 +87,22 @@ class WarehouseMCPServer:
         available = item["stock"] - item["reserved"]
         if available >= quantity:
             item["reserved"] += quantity
+            item["stock"] = max(0, item["stock"] - quantity)
             return True
         return False
+
+    @staticmethod
+    def db_restock_inventory(sku: str, quantity: int) -> None:
+        """Restock inventory in the database."""
+        if sku in _MOCK_WAREHOUSE_DB:
+            _MOCK_WAREHOUSE_DB[sku]["stock"] += quantity
+
+    @staticmethod
+    def db_reset_inventory() -> None:
+        """Reset mock database to initial state."""
+        _MOCK_WAREHOUSE_DB["SKU-1001"] = {"name": "Industrial Conveyor Belt", "stock": 45, "reserved": 10, "safety": 15, "price": 250.0}
+        _MOCK_WAREHOUSE_DB["SKU-1002"] = {"name": "Hydraulic Forklift Valve", "stock": 8, "reserved": 4, "safety": 10, "price": 45.0}
+        _MOCK_WAREHOUSE_DB["SKU-1003"] = {"name": "Barcode Scanner Unit", "stock": 120, "reserved": 20, "safety": 30, "price": 85.0}
 
     # --- Tool 2: Invoice Document Intelligence (Requirement #2) ---
 

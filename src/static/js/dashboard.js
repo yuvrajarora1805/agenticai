@@ -1,59 +1,111 @@
 /**
  * WareSync AI - Interactive Dashboard Controller
- * Handles WebSocket communication, DOM mutations, scenario triggers, and real-time Blackboard updates.
+ * Handles WebSocket communication, scenario triggers, and orchestration.
+ * Strict line limit: <250 lines.
  */
+
+import { DashboardRenderer } from "./renderer.js";
+import { StorefrontClient } from "./storefront.js";
 
 class DashboardController {
   constructor() {
     this.ws = null;
     this.state = null;
     this.initElements();
+    this.renderer = new DashboardRenderer(this.el);
+    this.storefront = new StorefrontClient(this.el, this.renderer, () => this.fetchInitialState());
     this.attachEventListeners();
+    this.fetchInitialState();
     this.connectWebSocket();
   }
 
+  async fetchInitialState() {
+    try {
+      const res = await fetch("/api/state");
+      const data = await res.json();
+      if (data) this.updateBlackboardView(data);
+    } catch (e) {
+      console.warn("Initial state fetch error:", e);
+    }
+  }
+
   initElements() {
-    this.wsStatusText = document.getElementById("ws-status-text");
-    this.promptInput = document.getElementById("prompt-input");
-    this.selectArchitecture = document.getElementById("select-architecture");
-    this.selectPersona = document.getElementById("select-persona");
-    this.btnRun = document.getElementById("btn-run-workflow");
-    this.btnReset = document.getElementById("btn-reset-state");
-
-    this.blackboardSessionId = document.getElementById("blackboard-session-id");
-    this.systemStatusBadge = document.getElementById("system-status-badge");
-    this.activeAgentBadge = document.getElementById("active-agent-badge");
-    this.inventoryTbody = document.getElementById("inventory-tbody");
-    this.poInvoicesContainer = document.getElementById("po-invoices-container");
-    this.a2aMessageStream = document.getElementById("a2a-message-stream");
-
-    this.kpiLatency = document.getElementById("kpi-latency");
-    this.kpiTokens = document.getElementById("kpi-tokens");
-    this.kpiSteps = document.getElementById("kpi-steps");
-    this.kpiCost = document.getElementById("kpi-cost");
-    this.structuredOutputJson = document.getElementById("structured-output-json");
-
-    this.logContainer = document.getElementById("log-container");
-    this.logCount = document.getElementById("log-count");
-    this.guardrailAlertBanner = document.getElementById("guardrail-alert-banner");
-    this.guardrailMsg = document.getElementById("guardrail-msg");
-
-    // Scenario Selectors
-    this.selectCategoryFilter = document.getElementById("select-category-filter");
-    this.selectScenario = document.getElementById("select-scenario");
-    this.btnLoadScenario = document.getElementById("btn-load-scenario");
-    this.btnRunBatch = document.getElementById("btn-run-batch");
-    this.allScenarios = [];
-    this.fetchScenarios();
+    const byId = (id) => document.getElementById(id);
+    this.el = {
+      wsStatusText: byId("ws-status-text"), promptInput: byId("prompt-input"), selectArchitecture: byId("select-architecture"),
+      selectPersona: byId("select-persona"), btnRun: byId("btn-run-workflow"), btnReset: byId("btn-reset-state"),
+      blackboardSessionId: byId("blackboard-session-id"), systemStatusBadge: byId("system-status-badge"),
+      activeAgentBadge: byId("active-agent-badge"), inventoryTbody: byId("inventory-tbody"),
+      poInvoicesContainer: byId("po-invoices-container"), a2aMessageStream: byId("a2a-message-stream"),
+      kpiLatency: byId("kpi-latency"), kpiTokens: byId("kpi-tokens"), kpiSteps: byId("kpi-steps"),
+      kpiCost: byId("kpi-cost"), structuredOutputJson: byId("structured-output-json"),
+      logContainer: byId("log-container"), logCount: byId("log-count"),
+      guardrailAlertBanner: byId("guardrail-alert-banner"), guardrailMsg: byId("guardrail-msg"),
+      selectCategoryFilter: byId("select-category-filter"), selectScenario: byId("select-scenario"),
+      btnLoadScenario: byId("btn-load-scenario"), btnRunBatch: byId("btn-run-batch"),
+      invoiceCardsContainer: byId("invoice-cards-container"), btnRefreshInvoices: byId("btn-refresh-invoices"),
+      pdfModalBackdrop: byId("pdf-modal-backdrop"), pdfPreviewIframe: byId("pdf-preview-iframe"),
+      modalInvoiceTitle: byId("modal-invoice-title"), modalInvoiceBadge: byId("modal-invoice-badge"),
+      modalDownloadLink: byId("modal-download-link"), btnCloseModal: byId("btn-close-modal"),
+      custSkuSelect: byId("cust-sku-select"), custQtyInput: byId("cust-qty-input"),
+      btnCustCheckStock: byId("btn-cust-check-stock"), custChatResponseBox: byId("cust-chat-response-box"),
+      custChatMessageText: byId("cust-chat-message-text"), btnCustConfirmYes: byId("btn-cust-confirm-yes"),
+      btnCustCancel: byId("btn-cust-cancel"), btnFactoryRestock: byId("btn-factory-restock"), microservicesGrid: byId("microservices-grid"),
+    };
+    this.allScenarios = []; this.fetchScenarios(); this.fetchMicroservices();
   }
 
   attachEventListeners() {
-    this.btnRun.addEventListener("click", () => this.handleRunWorkflow());
-    this.btnReset.addEventListener("click", () => this.handleResetState());
+    this.el.btnRun.addEventListener("click", () => this.handleRunWorkflow());
+    this.el.btnReset.addEventListener("click", () => this.handleResetState());
+    this.el.selectCategoryFilter.addEventListener("change", () => this.populateScenarioDropdown());
+    this.el.btnLoadScenario.addEventListener("click", () => this.handleLoadSelectedScenario());
+    this.el.btnRunBatch.addEventListener("click", () => this.handleRunBatchBenchmark());
+    const btnToggleMode = document.getElementById("btn-toggle-approval-mode");
+    if (btnToggleMode) {
+      btnToggleMode.addEventListener("click", async () => {
+        const nextMode = btnToggleMode.textContent.includes("Auto") ? "MANUAL" : "AUTO";
+        const res = await fetch("/api/settings/mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: nextMode }) });
+        const data = await res.json();
+        this.updateApprovalModeButton(data.mode);
+      });
+    }
+    const tgl = document.getElementById("sidebar-toggle-btn"), sb = document.getElementById("app-sidebar");
+    if (tgl && sb) {
+      tgl.addEventListener("click", () => sb.classList.toggle("expanded"));
+      document.addEventListener("click", (e) => { if (!sb.contains(e.target) && !tgl.contains(e.target)) sb.classList.remove("expanded"); });
+    }
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        const target = document.getElementById(btn.getAttribute("data-tab"));
+        if (target) target.classList.add("active");
+      });
+    });
+  }
 
-    this.selectCategoryFilter.addEventListener("change", () => this.populateScenarioDropdown());
-    this.btnLoadScenario.addEventListener("click", () => this.handleLoadSelectedScenario());
-    this.btnRunBatch.addEventListener("click", () => this.handleRunBatchBenchmark());
+  updateApprovalModeButton(mode) {
+    const btn = document.getElementById("btn-toggle-approval-mode");
+    if (!btn) return;
+    const isMan = mode === "MANUAL";
+    btn.textContent = isMan ? "✋ Manual Mode" : "⚡ Auto-Pilot";
+    btn.style.borderColor = isMan ? "var(--accent-amber)" : "var(--accent-emerald)";
+    btn.style.color = isMan ? "var(--accent-amber)" : "var(--accent-emerald)";
+    btn.style.background = isMan ? "rgba(245, 158, 11, 0.15)" : "rgba(16, 185, 129, 0.15)";
+  }
+
+  async handleApprovalAction(id, action) {
+    await fetch(`/api/approvals/${id}/action`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
+  }
+
+  async fetchMicroservices() {
+    try {
+      const res = await fetch("/api/microservices");
+      const data = await res.json();
+      this.renderer.renderMicroservices(data.microservices || []);
+    } catch (e) { console.warn("Microservices error:", e); }
   }
 
   async fetchScenarios() {
@@ -62,304 +114,132 @@ class DashboardController {
       const data = await res.json();
       this.allScenarios = data.scenarios || [];
       this.populateScenarioDropdown();
-    } catch (err) {
-      console.error("Failed to fetch scenarios:", err);
-    }
+    } catch (err) { console.error("Scenarios error:", err); }
   }
 
   populateScenarioDropdown() {
-    const selectedCat = this.selectCategoryFilter.value;
-    this.selectScenario.innerHTML = "";
-    const filtered = selectedCat === "ALL" 
-      ? this.allScenarios 
-      : this.allScenarios.filter(s => s.category === selectedCat);
-
+    const selectedCat = this.el.selectCategoryFilter.value;
+    this.el.selectScenario.innerHTML = "";
+    const filtered = selectedCat === "ALL" ? this.allScenarios : this.allScenarios.filter((s) => s.category === selectedCat);
     filtered.forEach((sc) => {
       const opt = document.createElement("option");
       opt.value = sc.id;
       opt.textContent = `[${sc.id}] ${sc.title}`;
-      this.selectScenario.appendChild(opt);
+      this.el.selectScenario.appendChild(opt);
     });
   }
 
   handleLoadSelectedScenario() {
-    const selectedId = this.selectScenario.value;
-    const sc = this.allScenarios.find(s => s.id === selectedId);
+    const sc = this.allScenarios.find((s) => s.id === this.el.selectScenario.value);
     if (!sc) return;
-
-    this.promptInput.value = sc.prompt;
-    this.selectArchitecture.value = sc.architecture;
-    this.selectPersona.value = sc.persona;
+    this.el.promptInput.value = sc.prompt;
+    this.el.selectArchitecture.value = sc.architecture;
+    this.el.selectPersona.value = sc.persona;
   }
 
   async handleRunBatchBenchmark() {
-    this.btnRunBatch.textContent = "Running 42 Scenarios...";
-    this.btnRunBatch.disabled = true;
-
+    this.el.btnRunBatch.textContent = "Running 42 Scenarios...";
+    this.el.btnRunBatch.disabled = true;
     try {
       const res = await fetch("/api/run-batch-benchmark", { method: "POST" });
       const data = await res.json();
-      this.structuredOutputJson.textContent = JSON.stringify(data.summary, null, 2);
-      this.kpiLatency.textContent = `${data.summary.total_benchmark_time_ms} ms`;
-      this.kpiSteps.textContent = `${data.summary.total_executed} TCs`;
-      alert(`Batch Benchmark Complete!\n• Total Tests Executed: ${data.summary.total_executed}\n• Pass Rate: ${data.summary.pass_rate_pct}%\n• Benchmark Time: ${data.summary.total_benchmark_time_ms} ms`);
-    } catch (err) {
-      console.error("Batch error:", err);
-    } finally {
-      this.btnRunBatch.textContent = "⚡ Run All 42 (Batch)";
-      this.btnRunBatch.disabled = false;
-    }
+      this.el.structuredOutputJson.textContent = JSON.stringify(data.summary, null, 2);
+      this.el.kpiLatency.textContent = `${data.summary.total_benchmark_time_ms} ms`;
+      this.el.kpiSteps.textContent = `${data.summary.passed} / ${data.summary.total_executed}`;
+    } catch (err) { console.error("Batch error:", err); }
+    finally { this.el.btnRunBatch.textContent = "⚡ Run All 42 (Batch)"; this.el.btnRunBatch.disabled = false; }
   }
 
   connectWebSocket() {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/stream`;
-
-    this.ws = new WebSocket(wsUrl);
-
-    this.ws.onopen = () => {
-      this.wsStatusText.textContent = "Blackboard Connected";
-      this.wsStatusText.style.color = "var(--accent-emerald)";
-    };
-
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    this.ws = new WebSocket(`${proto}//${window.location.host}/ws/stream`);
+    this.ws.onopen = () => { this.el.wsStatusText.textContent = "Hover Blackboard: Connected"; this.el.wsStatusText.style.color = "var(--accent-emerald)"; };
     this.ws.onmessage = (event) => {
       try {
-        const packet = JSON.parse(event.data);
-        this.handleWebSocketPacket(packet);
-      } catch (err) {
-        console.error("WS Parse Error:", err);
-      }
+        const payload = JSON.parse(event.data);
+        if (payload.full_state) this.updateBlackboardView(payload.full_state);
+      } catch (e) { console.error("WS Parse error:", e); }
     };
-
     this.ws.onclose = () => {
-      this.wsStatusText.textContent = "Disconnected (Reconnecting...)";
-      this.wsStatusText.style.color = "var(--accent-rose)";
+      this.el.wsStatusText.textContent = "Hover Blackboard: Reconnecting...";
+      this.el.wsStatusText.style.color = "var(--accent-amber)";
       setTimeout(() => this.connectWebSocket(), 3000);
     };
   }
 
-  handleWebSocketPacket(packet) {
-    if (packet.type === "init" || packet.type === "blackboard_event") {
-      const state = packet.full_state;
-      if (state) {
-        this.updateBlackboardView(state);
-      }
-    }
-
-    if (packet.type === "guardrail_alert") {
-      this.showGuardrailAlert(packet.message);
-    }
-  }
-
-  async handleRunWorkflow(scenarioType = "custom") {
-    const prompt = this.promptInput.value.trim();
-    if (!prompt) {
-      alert("Please enter a prompt or select a preset scenario.");
-      return;
-    }
-
+  async handleRunWorkflow() {
+    const prompt = this.el.promptInput.value.trim();
+    if (!prompt) return;
     this.hideGuardrailAlert();
-    this.btnRun.textContent = "Running Multi-Agent Workflow...";
-    this.btnRun.disabled = true;
-
+    this.el.btnRun.textContent = "Processing...";
+    this.el.btnRun.disabled = true;
     try {
-      const res = await fetch("/api/trigger", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: prompt,
-          scenario_type: scenarioType,
-          prompt_architecture: this.selectArchitecture.value,
-          persona: this.selectPersona.value,
-        }),
+      const scenarioType = prompt.toLowerCase().includes("invoice") ? "invoice_audit" : "order_fulfillment";
+      const res = await fetch("/api/trigger-workflow", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, scenario_type: scenarioType, prompt_architecture: this.el.selectArchitecture.value, persona: this.el.selectPersona.value }),
       });
-
       const data = await res.json();
-      if (data.status === "blocked_by_guardrails") {
-        this.showGuardrailAlert(data.reason);
-      } else {
-        this.structuredOutputJson.textContent = JSON.stringify(data.result, null, 2);
-        this.kpiLatency.textContent = `${data.latency_ms} ms`;
+      if (data.status === "blocked_by_guardrails") this.showGuardrailAlert(data.reason);
+      else {
+        this.el.structuredOutputJson.textContent = JSON.stringify(data.result, null, 2);
+        this.el.kpiLatency.textContent = `${data.latency_ms} ms`;
+        if (data.langfuse_trace) {
+          const tid = document.getElementById("current-trace-id"), tlink = document.getElementById("btn-view-langfuse-trace");
+          if (tid) tid.textContent = data.langfuse_trace.id;
+          if (tlink) tlink.href = `/api/traces/${data.langfuse_trace.id}`;
+        }
+        this.storefront.fetchInvoices();
       }
-    } catch (err) {
-      console.error("API Error:", err);
-    } finally {
-      this.btnRun.textContent = "Execute Workflow";
-      this.btnRun.disabled = false;
-    }
+    } catch (err) { console.error("API Error:", err); }
+    finally { this.el.btnRun.textContent = "Execute Workflow"; this.el.btnRun.disabled = false; }
   }
 
   async handleResetState() {
     await fetch("/api/reset", { method: "POST" });
     this.hideGuardrailAlert();
-    this.structuredOutputJson.textContent = "// State reset. Waiting for new workflow...";
-    this.kpiLatency.textContent = "0 ms";
-    this.kpiTokens.textContent = "0";
-    this.kpiSteps.textContent = "0";
-    this.kpiCost.textContent = "$0.000";
-    this.logContainer.innerHTML = '<div class="log-entry" style="color: var(--text-dim);">Blackboard state reset to baseline.</div>';
+    this.el.structuredOutputJson.textContent = "// State reset. Waiting for new workflow...";
+    this.el.kpiLatency.textContent = "0 ms"; this.el.kpiTokens.textContent = "0"; this.el.kpiSteps.textContent = "0"; this.el.kpiCost.textContent = "$0.000";
+    this.el.logContainer.innerHTML = '<div class="log-entry" style="color: var(--text-dim);">Blackboard state reset to baseline.</div>';
   }
 
   updateBlackboardView(state) {
     this.state = state;
-    this.blackboardSessionId.textContent = state.session_id;
+    this.el.blackboardSessionId.textContent = state.session_id;
+    this.el.systemStatusBadge.textContent = state.status;
+    this.el.systemStatusBadge.className = `badge-status ${state.status.toLowerCase()}`;
 
-    // Status Badge
-    this.systemStatusBadge.textContent = state.status;
-    this.systemStatusBadge.className = `badge-status ${state.status.toLowerCase()}`;
-
-    // Active Agent Badge
     if (state.active_agent) {
-      this.activeAgentBadge.textContent = state.active_agent;
+      this.el.activeAgentBadge.textContent = state.active_agent;
       const isADK = state.active_agent.includes("Inventory") || state.active_agent.includes("Invoice");
-      this.activeAgentBadge.className = `framework-tag ${isADK ? "adk" : "crewai"}`;
+      this.el.activeAgentBadge.className = `framework-tag ${isADK ? "adk" : "crewai"}`;
     }
 
-    // Render Inventory Table
-    this.renderInventoryTable(state.inventory_cache);
-
-    // Render Active POs and Invoices
-    this.renderPOsAndInvoices(state.purchase_orders, state.invoices);
-
-    // Render A2A Channel
-    this.renderA2AMessages(state.pending_events);
-
-    // Render Execution Trace & Callbacks
-    this.renderExecutionTrace(state.execution_trace);
-
-    // Update Telemetry KPIs
+    if (state.approval_mode) this.updateApprovalModeButton(state.approval_mode);
+    this.renderer.renderPendingApprovals(state.pending_approvals, (id, act) => this.handleApprovalAction(id, act));
+    this.renderer.renderInventoryTable(state.inventory_cache);
+    this.renderer.renderPOsAndInvoices(state.purchase_orders, state.invoices, state.active_orders);
+    this.renderer.renderA2AMessages(state.pending_events);
+    this.renderer.renderExecutionTrace(state.execution_trace);
     this.updateTelemetry(state.execution_trace);
-  }
-
-  renderInventoryTable(inventoryCache) {
-    this.inventoryTbody.innerHTML = "";
-    Object.values(inventoryCache || {}).forEach((item) => {
-      const tr = document.createElement("tr");
-      const isLow = item.available_qty <= item.safety_stock;
-      tr.innerHTML = `
-        <td><strong style="color: var(--accent-cyan);">${item.sku}</strong></td>
-        <td>${item.name}</td>
-        <td><span style="color: ${isLow ? 'var(--accent-rose)' : 'var(--accent-emerald)'}; font-weight: bold;">${item.available_qty}</span></td>
-        <td>${item.reserved_qty}</td>
-        <td>${item.safety_stock}</td>
-        <td>$${item.unit_price.toFixed(2)}</td>
-      `;
-      this.inventoryTbody.appendChild(tr);
-    });
-  }
-
-  renderPOsAndInvoices(purchaseOrders, invoices) {
-    this.poInvoicesContainer.innerHTML = "";
-    const poList = Object.values(purchaseOrders || {});
-    const invList = Object.values(invoices || {});
-
-    if (poList.length === 0 && invList.length === 0) {
-      this.poInvoicesContainer.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">No pending purchase orders or discrepancies in blackboard.</div>';
-      return;
-    }
-
-    poList.forEach((po) => {
-      const card = document.createElement("div");
-      card.style.cssText = "background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-sm); padding: 10px;";
-      card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600;">
-          <span>📦 Purchase Order: ${po.po_id}</span>
-          <span style="color: var(--accent-blue);">$${po.total_cost}</span>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-          Supplier: ${po.supplier_name} | Qty: ${po.quantity} units of ${po.sku}
-        </div>
-      `;
-      this.poInvoicesContainer.appendChild(card);
-    });
-
-    invList.forEach((inv) => {
-      const isMismatch = inv.status !== "VERIFIED";
-      const card = document.createElement("div");
-      card.style.cssText = `background: rgba(${isMismatch ? '244, 63, 94' : '16, 185, 129'}, 0.08); border: 1px solid rgba(${isMismatch ? '244, 63, 94' : '16, 185, 129'}, 0.3); border-radius: var(--radius-sm); padding: 10px;`;
-      card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600;">
-          <span>📑 Invoice Audit: ${inv.invoice_number}</span>
-          <span style="color: ${isMismatch ? 'var(--accent-rose)' : 'var(--accent-emerald)'};">${inv.status}</span>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-          PO Ref: ${inv.po_id} | ${inv.audit_notes}
-        </div>
-      `;
-      this.poInvoicesContainer.appendChild(card);
-    });
-  }
-
-  renderA2AMessages(events) {
-    if (!events || events.length === 0) {
-      this.a2aMessageStream.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-dim);">Awaiting cross-framework agent triggers (CrewAI ↔ ADK)...</div>';
-      return;
-    }
-    this.a2aMessageStream.innerHTML = "";
-    events.slice(-4).forEach((evt) => {
-      const card = document.createElement("div");
-      card.style.cssText = "background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 8px;";
-      card.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem;">
-          <span style="color: var(--accent-cyan); font-weight: 600;">⚡ ${evt.intent}</span>
-          <span style="font-size: 0.7rem; color: var(--text-dim);">${evt.message_id}</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-top: 4px;">
-          <span class="framework-tag ${evt.sender_framework.toLowerCase()}">${evt.sender_agent} (${evt.sender_framework})</span>
-          <span>➔</span>
-          <span class="framework-tag ${evt.receiver_framework.toLowerCase()}">${evt.receiver_agent} (${evt.receiver_framework})</span>
-        </div>
-      `;
-      this.a2aMessageStream.appendChild(card);
-    });
-  }
-
-  renderExecutionTrace(traces) {
-    if (!traces) return;
-    this.logCount.textContent = `${traces.length} steps`;
-    this.logContainer.innerHTML = "";
-    traces.slice(-25).forEach((t) => {
-      const div = document.createElement("div");
-      div.className = "log-entry";
-      const timeStr = t.timestamp ? t.timestamp.split("T")[1]?.slice(0, 8) : "";
-      div.innerHTML = `
-        <span class="log-time">[${timeStr}]</span>
-        <span class="framework-tag ${t.framework.toLowerCase()}">${t.framework}</span>
-        <span class="log-agent">${t.agent_name}:</span>
-        <span class="log-action">${t.action}</span>
-        <span style="color: var(--text-dim); font-size: 0.7rem;">(${t.latency_ms.toFixed(1)}ms | ${t.tokens_used} tok)</span>
-      `;
-      this.logContainer.appendChild(div);
-    });
-    this.logContainer.scrollTop = this.logContainer.scrollHeight;
   }
 
   updateTelemetry(traces) {
     if (!traces || traces.length === 0) return;
-    let totalTokens = 0;
-    let totalLatency = 0;
-    traces.forEach((t) => {
-      totalTokens += t.tokens_used || 0;
-      totalLatency += t.latency_ms || 0;
-    });
-    this.kpiTokens.textContent = totalTokens.toLocaleString();
-    this.kpiSteps.textContent = traces.length;
-    // Estimated cost: ~$0.0015 per 1k tokens
-    const cost = (totalTokens / 1000) * 0.0015;
-    this.kpiCost.textContent = `$${cost.toFixed(4)}`;
+    const totalTokens = traces.reduce((acc, t) => acc + (t.tokens_used || 0), 0);
+    this.el.kpiTokens.textContent = totalTokens.toLocaleString();
+    this.el.kpiSteps.textContent = traces.length;
+    this.el.kpiCost.textContent = `$${((totalTokens / 1000) * 0.0015).toFixed(4)}`;
   }
 
-  showGuardrailAlert(msg) {
-    this.guardrailMsg.textContent = msg;
-    this.guardrailAlertBanner.style.display = "block";
-  }
-
-  hideGuardrailAlert() {
-    this.guardrailAlertBanner.style.display = "none";
-  }
+  showGuardrailAlert(msg) { this.el.guardrailMsg.textContent = msg; this.el.guardrailAlertBanner.style.display = "block"; }
+  hideGuardrailAlert() { this.el.guardrailAlertBanner.style.display = "none"; }
 }
 
-// Initialize when DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   window.dashboard = new DashboardController();
+  window.toggleServiceStatus = async (id) => {
+    await fetch(`/api/microservices/${id}/toggle`, { method: "POST" });
+    window.dashboard.fetchMicroservices();
+  };
 });

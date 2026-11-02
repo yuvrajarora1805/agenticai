@@ -60,6 +60,12 @@ class HoverBlackboard:
         with self.lock:
             return self.state.inventory_cache.get(sku)
 
+    def record_customer_order(self, order_id: str, order_data: Dict[str, Any]) -> None:
+        with self.lock:
+            self.state.active_orders[order_id] = order_data
+            self.state.last_updated = datetime.utcnow()
+            self._notify("customer_order_posted", order_data)
+
     def record_purchase_order(self, po: PurchaseOrderProposal) -> None:
         with self.lock:
             self.state.purchase_orders[po.po_id] = po
@@ -107,6 +113,32 @@ class HoverBlackboard:
             self.state.status = SystemStatus.ERROR
             self.state.last_updated = datetime.utcnow()
             self._notify("error_logged", error_msg)
+
+    def set_approval_mode(self, mode: str) -> None:
+        with self.lock:
+            self.state.approval_mode = mode.upper()
+            self.state.last_updated = datetime.utcnow()
+            self._notify("approval_mode_changed", {"mode": self.state.approval_mode})
+
+    def add_pending_approval(self, approval_item: Dict[str, Any]) -> None:
+        with self.lock:
+            self.state.pending_approvals.append(approval_item)
+            self.state.status = SystemStatus.WAITING_APPROVAL
+            self.state.last_updated = datetime.utcnow()
+            self._notify("pending_approval_added", approval_item)
+
+    def resolve_pending_approval(self, approval_id: str, action: str) -> Optional[Dict[str, Any]]:
+        with self.lock:
+            found = None
+            for idx, it in enumerate(self.state.pending_approvals):
+                if it.get("id") == approval_id:
+                    found = self.state.pending_approvals.pop(idx)
+                    break
+            if not self.state.pending_approvals and self.state.status == SystemStatus.WAITING_APPROVAL:
+                self.state.status = SystemStatus.IDLE
+            self.state.last_updated = datetime.utcnow()
+            self._notify("pending_approval_resolved", {"id": approval_id, "action": action, "item": found})
+            return found
 
     def get_full_state(self) -> BlackboardState:
         with self.lock:
