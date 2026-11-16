@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WareSync AI - Invoices, Challans & Audit Documents</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Content scroll container */
+    .docs-page-container {
+      padding: 24px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-sizing: border-box;
+    }
+
+    /* KPI Summary Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    .stat-card {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .stat-card.card-cust::before { background: var(--accent-blue); }
+    .stat-card.card-supp::before { background: var(--accent-emerald); }
+    .stat-card.card-disc::before { background: var(--accent-rose); }
+    .stat-card.card-dc::before { background: var(--accent-violet); }
+
+    .stat-card .lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .stat-card .val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      line-height: 1.1;
+      margin: 4px 0 2px 0;
+    }
+
+    .stat-card .desc {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Filter & Search Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 14px 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-glass);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-chip .chip-count {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+
+    .filter-chip:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--text-main);
+    }
+
+    .filter-chip.active {
+      background: rgba(0, 240, 255, 0.12);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .filter-chip.active .chip-count {
+      background: rgba(0, 240, 255, 0.25);
+      color: #fff;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      gap: 10px;
+      min-width: 300px;
+      flex-shrink: 0;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 0.82rem;
+      font-family: var(--font-main);
+      width: 100%;
+    }
+
+    /* Grid of Documents */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Document Card */
+    .doc-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: var(--transition-smooth);
+      position: relative;
+      overflow: hidden;
+      min-height: 185px;
+    }
+
+    .doc-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .doc-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .doc-card.type-cust::before {
+      background: linear-gradient(90deg, #6366f1, #38bdf8);
+    }
+
+    .doc-card.type-supp::before {
+      background: linear-gradient(90deg, #10b981, #00f0ff);
+    }
+
+    .doc-card.type-supp-discrepancy::before {
+      background: linear-gradient(90deg, #f43f5e, #f59e0b);
+    }
+
+    .doc-card.type-dc::before {
+      background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    }
+
+    .doc-id-text {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #fff;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .doc-meta-label {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .doc-filename-sub {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    .btn-preview-doc {
+      flex: 1;
+      padding: 7px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+    }
+
+    .btn-dl-doc {
+      padding: 7px 12px;
+      font-size: 0.78rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-xs);
+    }
+
+    @media (max-width: 1200px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .search-box { min-width: 100%; }
+      .docs-page-container { padding: 14px; }
+    }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <div class="brand-icon">W</div>
+        <div>
+          <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
+          <span class="brand-badge" style="font-size: 0.6rem;">Audit & Invoices</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link" title="Operations Cockpit">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Operations Cockpit</span>
+        </a>
+        <a href="/dispatch.html" class="sidebar-link" title="Dispatch Team">
+          <span class="nav-icon">🚚</span>
+          <span class="nav-text">Dispatch Team</span>
+        </a>
+        <a href="/invoices.html" class="sidebar-link active" title="Invoices & Challans">
+          <span class="nav-icon">📄</span>
+          <span class="nav-text">Invoices & Challans</span>
+        </a>
+        <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
+          <span class="nav-icon">🧩</span>
+          <span class="nav-text">Microservices Fleet</span>
+        </a>
+        <a href="/metrics.html" class="sidebar-link" title="Grafana Telemetry & Live Graphs">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grafana Telemetry</span>
+        </a>
+        <a href="/customer.html" class="sidebar-link" title="Customer Storefront">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">API Swagger Docs</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/" class="btn" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.78rem; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0, 240, 255, 0.12); border: 1px solid var(--accent-cyan); color: #ffffff; font-weight: 700; border-radius: var(--radius-sm);">
+        <span class="btn-icon">⬅</span> <span class="btn-label" style="color: #ffffff;">Back to Cockpit</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN OPERATIONAL STAGE -->
+  <div class="app-main">
+    <header class="app-topbar">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
+        <div>
+          <h1 class="topbar-title" style="font-size: 1.05rem; font-weight: 800; color: #fff;">Invoices & Delivery Challans Repository</h1>
+          <div style="font-size: 0.72rem; color: var(--text-dim);">Real-time PDF Archive • Accounts Receivable (AR) • Accounts Payable (AP) • Dispatch Challans (DC)</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button id="btn-refresh-invoices-page" class="btn btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+          <span>↻</span> Refresh Documents
+        </button>
+        <span class="stock-pill" style="background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan); font-size: 0.75rem;" id="badge-total-count">Loading...</span>
+      </div>
+    </header>
+
+    <main class="docs-page-container">
+      <!-- STATS SUMMARY CARDS -->
+      <div class="stats-row">
+        <div class="stat-card card-cust">
+          <span class="lbl">Customer Invoices (AR)</span>
+          <span class="val" style="color: var(--accent-blue);" id="stat-cust-count">0</span>
+          <span class="desc">Fulfillment order billings issued</span>
+        </div>
+        <div class="stat-card card-supp">
+          <span class="lbl">Supplier Invoices (AP)</span>
+          <span class="val" style="color: var(--accent-emerald);" id="stat-supp-count">0</span>
+          <span class="desc">Three-way verified procurement match</span>
+        </div>
+        <div class="stat-card card-disc">
+          <span class="lbl">Discrepancy Audits</span>
+          <span class="val" style="color: var(--accent-rose);" id="stat-held-count">0</span>
+          <span class="desc">Held for supervisor manual review</span>
+        </div>
+        <div class="stat-card card-dc">
+          <span class="lbl">Delivery Challans (DC)</span>
+          <span class="val" style="color: var(--accent-violet);" id="stat-dc-count">0</span>
+          <span class="desc">Fleet transport dispatch manifests</span>
+        </div>
+      </div>
+
+      <!-- FILTER & SEARCH BAR -->
+      <div class="filter-bar">
+        <div class="filter-chips">
+          <button class="filter-chip active" data-filter="all">
+            <span>🌐 All Documents</span>
+            <span class="chip-count" id="chip-count-all">0</span>
+          </button>
+          <button class="filter-chip" data-filter="customer">
+            <span>📄 Customer (AR)</span>
+            <span class="chip-count" id="chip-count-customer">0</span>
+          </button>
+          <button class="filter-chip" data-filter="supplier">
+            <span>🧾 Supplier (AP)</span>
+            <span class="chip-count" id="chip-count-supplier">0</span>
+          </button>
+          <button class="filter-chip" data-filter="challans">
+            <span>📋 Delivery Challans (DC)</span>
+            <span class="chip-count" id="chip-count-challans">0</span>
+          </button>
+          <button class="filter-chip" data-filter="discrepancy">
+            <span>⚠️ Discrepancy Held</span>
+            <span class="chip-count" id="chip-count-discrepancy">0</span>
+          </button>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="doc-search-input" placeholder="Search by Invoice ID or filename..." />
+        </div>
+      </div>
+
+      <!-- DOCUMENTS GRID -->
+      <div class="docs-grid" id="docs-grid-container">
+        <div style="font-size: 0.85rem; color: var(--text-dim); padding: 30px; grid-column: 1 / -1; text-align: center;">Loading archive documents...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- PDF Preview Modal -->
+  <div id="pdf-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-md); width: 100%; max-width: 960px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.7);">
+      <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+        <div>
+          <span style="font-weight: 700; font-size: 0.95rem; color: #fff;" id="modal-invoice-title">Invoice Preview</span>
+          <span id="modal-invoice-badge" class="framework-tag mcp" style="margin-left: 8px;">PDF Document</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <a id="modal-download-link" href="#" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 12px; text-decoration: none;">⬇ Download PDF</a>
+          <button id="btn-close-modal" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">✕ Close</button>
+        </div>
+      </div>
+      <div style="flex: 1; position: relative;">
+        <iframe id="pdf-preview-iframe" src="about:blank" style="width: 100%; height: 100%; border: none; background: #fff;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allInvoices = [];
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    const el = {
+      grid: document.getElementById('docs-grid-container'),
+      searchInput: document.getElementById('doc-search-input'),
+      refreshBtn: document.getElementById('btn-refresh-invoices-page'),
+      totalBadge: document.getElementById('badge-total-count'),
+      statCust: document.getElementById('stat-cust-count'),
+      statSupp: document.getElementById('stat-supp-count'),
+      statHeld: document.getElementById('stat-held-count'),
+      statDc: document.getElementById('stat-dc-count'),
+      chipAll: document.getElementById('chip-count-all'),
+      chipCust: document.getElementById('chip-count-customer'),
+      chipSupp: document.getElementById('chip-count-supplier'),
+      chipDc: document.getElementById('chip-count-challans'),
+      chipDisc: document.getElementById('chip-count-discrepancy'),
+      modalBackdrop: document.getElementById('pdf-modal-backdrop'),
+      modalTitle: document.getElementById('modal-invoice-title'),
+      modalBadge: document.getElementById('modal-invoice-badge'),
+      modalDownload: document.getElementById('modal-download-link'),
+      modalIframe: document.getElementById('pdf-preview-iframe'),
+      btnCloseModal: document.getElementById('btn-close-modal'),
+      toggleBtn: document.getElementById('sidebar-toggle-btn'),
+      sidebar: document.getElementById('app-sidebar')
+    };
+
+    if (el.toggleBtn && el.sidebar) {
+      el.toggleBtn.addEventListener('click', () => el.sidebar.classList.toggle('expanded'));
+      document.addEventListener('click', (e) => {
+        if (!el.sidebar.contains(e.target) && !el.toggleBtn.contains(e.target)) {
+          el.sidebar.classList.remove('expanded');
+        }
+      });
+    }
+
+    async function fetchInvoices() {
+      try {
+        const res = await fetch('/api/invoices/list');
+        const data = await res.json();
+        allInvoices = data.invoices || [];
+        updateStats();
+        renderDocuments();
+      } catch (err) {
+        console.error('Failed to fetch invoices:', err);
+        el.grid.innerHTML = '<div style="color: var(--accent-rose); font-size: 0.85rem; padding: 20px; grid-column: 1 / -1; text-align: center;">Failed to load documents from server.</div>';
+      }
+    }
+
+    function updateStats() {
+      let cust = 0, supp = 0, held = 0, dc = 0;
+      allInvoices.forEach(inv => {
+        const isDC = inv.type.includes('Delivery Challan') || inv.id.startsWith('DC-');
+        const isCust = inv.type.includes('Customer') || inv.id.includes('CUST');
+        const isHeld = inv.status.includes('DISCREPANCY');
+
+        if (isDC) dc++;
+        else if (isCust) cust++;
+        else supp++;
+
+        if (isHeld) held++;
+      });
+
+      el.totalBadge.textContent = `${allInvoices.length} Documents`;
+      el.statCust.textContent = cust;
+      el.statSupp.textContent = supp;
+      el.statHeld.textContent = held;
+      el.statDc.textContent = dc;
+
+      el.chipAll.textContent = allInvoices.length;
+      el.chipCust.textContent = cust;
+      el.chipSupp.textContent = supp;
+      el.chipDc.textContent = dc;
+      el.chipDisc.textContent = held;
+    }
+
+    function renderDocuments() {
+      el.grid.innerHTML = '';
+      const query = searchQuery.trim().toLowerCase();
+
+      const filtered = allInvoices.filter(inv => {
+        const isDC = inv.type.includes('Delivery Challan') || inv.id.startsWith('DC-');
+        const isCust = inv.type.includes('Customer') || inv.id.includes('CUST');
+        const isHeld = inv.status.includes('DISCREPANCY');
+
+        if (currentFilter === 'customer' && !isCust) return false;
+        if (currentFilter === 'supplier' && (isCust || isDC)) return false;
+        if (currentFilter === 'challans' && !isDC) return false;
+        if (currentFilter === 'discrepancy' && !isHeld) return false;
+
+        if (query) {
+          const matchId = (inv.id || '').toLowerCase().includes(query);
+          const matchName = (inv.filename || '').toLowerCase().includes(query);
+          const matchStatus = (inv.status || '').toLowerCase().includes(query);
+          const matchType = (inv.type || '').toLowerCase().includes(query);
+          if (!matchId && !matchName && !matchStatus && !matchType) return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        el.grid.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-dim); padding: 40px; grid-column: 1 / -1; text-align: center;">No documents matching current filters or search term.</div>';
+        return;
+      }
+
+      filtered.forEach(inv => {
+        const card = document.createElement('div');
+        const isDC = inv.type.includes('Delivery Challan') || inv.id.startsWith('DC-');
+        const isCust = inv.type.includes('Customer') || inv.id.includes('CUST');
+        const isMismatch = inv.status.includes('DISCREPANCY');
+
+        let cardTypeClass = 'type-supp';
+        if (isDC) cardTypeClass = 'type-dc';
+        else if (isCust) cardTypeClass = 'type-cust';
+        else if (isMismatch) cardTypeClass = 'type-supp-discrepancy';
+
+        const badgeClass = isDC ? 'mcp' : (isCust ? 'crewai' : 'adk');
+        const badgeIcon = isDC ? '📋 ' : '📄 ';
+        const statusColor = isMismatch ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+
+        card.className = `doc-card ${cardTypeClass}`;
+        card.innerHTML = `
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+              <span class="framework-tag ${badgeClass}">${badgeIcon}${inv.type}</span>
+              <span style="font-size: 0.68rem; color: ${statusColor}; font-weight: 700; letter-spacing: 0.02em;">${inv.status}</span>
+            </div>
+            <div class="doc-id-text">${inv.id}</div>
+            <div class="doc-meta-label">${inv.category || 'Dispatch Logistics'}</div>
+            <div class="doc-filename-sub">${inv.filename || (inv.id + '.pdf')}</div>
+          </div>
+          <div class="card-actions-row">
+            <button class="btn btn-primary btn-preview-doc">
+              <span>👁️</span> View ${isDC ? 'Challan' : 'PDF'}
+            </button>
+            <a href="${inv.download_url}" target="_blank" class="btn btn-secondary btn-dl-doc" title="Download PDF">
+              ⬇️
+            </a>
+          </div>
+        `;
+
+        card.querySelector('.btn-preview-doc').addEventListener('click', () => openModal(inv));
+        el.grid.appendChild(card);
+      });
+    }
+
+    function openModal(inv) {
+      el.modalTitle.textContent = `${inv.type}: ${inv.id}`;
+      el.modalBadge.textContent = inv.status;
+      el.modalBadge.className = `framework-tag ${inv.status.includes('DISCREPANCY') ? 'adk' : 'crewai'}`;
+      el.modalDownload.href = inv.download_url;
+      el.modalIframe.src = inv.preview_url;
+      el.modalBackdrop.style.display = 'flex';
+    }
+
+    function closeModal() {
+      el.modalBackdrop.style.display = 'none';
+      el.modalIframe.src = 'about:blank';
+    }
+
+    el.btnCloseModal.addEventListener('click', closeModal);
+    el.modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === el.modalBackdrop) closeModal();
+    });
+
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentFilter = chip.getAttribute('data-filter');
+        renderDocuments();
+      });
+    });
+
+    el.searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderDocuments();
+    });
+
+    el.refreshBtn.addEventListener('click', fetchInvoices);
+
+    fetchInvoices();
+  </script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WareSync AI - Warehouse Dispatch & Logistics Station</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .dispatch-page-container {
+      padding: 24px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-sizing: border-box;
+    }
+
+    .dispatch-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    .dispatch-kpi {
+      padding: 18px 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dispatch-kpi::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .kpi-manifests::before { background: var(--accent-violet); }
+    .kpi-dispatched::before { background: var(--accent-emerald); }
+    .kpi-carrier::before { background: var(--accent-cyan); }
+    .kpi-transit::before { background: var(--accent-amber); }
+
+    .dispatch-kpi .val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      line-height: 1.1;
+      margin: 4px 0 2px 0;
+    }
+
+    .dispatch-kpi .lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .dispatch-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 14px 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+    }
+
+    .dispatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+
+    .challan-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-glass);
+      border-left: 4px solid var(--accent-violet);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition-smooth);
+      position: relative;
+    }
+
+    .challan-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+
+    .challan-id {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .status-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    @media (max-width: 1200px) {
+      .dispatch-kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .dispatch-kpi-row { grid-template-columns: 1fr; }
+      .dispatch-controls-bar { flex-direction: column; align-items: stretch; }
+      .dispatch-page-container { padding: 14px; }
+    }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <div class="brand-icon" style="background: linear-gradient(135deg, var(--accent-violet), var(--accent-blue));">🚚</div>
+        <div>
+          <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
+          <span class="brand-badge" style="font-size: 0.6rem; color: var(--accent-violet); border-color: rgba(139, 92, 246, 0.4);">Dispatch Team</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link" title="Operations Cockpit">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Operations Cockpit</span>
+        </a>
+        <a href="/dispatch.html" class="sidebar-link active" title="Dispatch Team">
+          <span class="nav-icon">🚚</span>
+          <span class="nav-text">Dispatch Team</span>
+        </a>
+        <a href="/invoices.html" class="sidebar-link" title="Invoices & Challans">
+          <span class="nav-icon">📄</span>
+          <span class="nav-text">Invoices & Challans</span>
+        </a>
+        <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
+          <span class="nav-icon">🧩</span>
+          <span class="nav-text">Microservices Fleet</span>
+        </a>
+        <a href="/metrics.html" class="sidebar-link" title="Grafana Telemetry & Live Graphs">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grafana Telemetry</span>
+        </a>
+        <a href="/customer.html" class="sidebar-link" title="Customer Storefront">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">API Swagger Docs</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/" class="btn" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.78rem; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0, 240, 255, 0.12); border: 1px solid var(--accent-cyan); color: #ffffff; font-weight: 700; border-radius: var(--radius-sm);">
+        <span class="btn-icon">⬅</span> <span class="btn-label" style="color: #ffffff;">Back to Cockpit</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN OPERATIONAL STAGE -->
+  <div class="app-main">
+    <header class="app-topbar">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
+        <div>
+          <h1 class="topbar-title" style="font-size: 1.05rem; font-weight: 800; color: #fff;">Warehouse Dispatch & Packing Control Station</h1>
+          <div style="font-size: 0.72rem; color: var(--text-dim);">CrewAI Dispatch Agent • Transport Manifests • Physical Delivery Challans (DC) • Carrier Hand-off</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button id="btn-refresh-dispatch" class="btn btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+          <span>↻</span> Refresh Challans
+        </button>
+        <span class="stock-pill" style="background: rgba(139, 92, 246, 0.15); color: var(--accent-violet); font-size: 0.75rem;" id="badge-total-challans">Loading...</span>
+      </div>
+    </header>
+
+    <main class="dispatch-page-container">
+      <!-- DISPATCH STATS KPI CARDS -->
+      <div class="dispatch-kpi-row">
+        <div class="dispatch-kpi kpi-manifests">
+          <span class="lbl">Delivery Challans (DC)</span>
+          <span class="val" style="color: var(--accent-violet);" id="kpi-total-challans">0</span>
+          <span style="font-size: 0.74rem; color: var(--text-dim);">Physical packing manifests signed</span>
+        </div>
+        <div class="dispatch-kpi kpi-dispatched">
+          <span class="lbl">Active Carrier</span>
+          <span class="val" style="font-size: 1.35rem; color: var(--accent-emerald);" id="kpi-carrier-name">Apex Express</span>
+          <span style="font-size: 0.74rem; color: var(--text-dim);">Assigned freight fleet</span>
+        </div>
+        <div class="dispatch-kpi kpi-transit">
+          <span class="lbl">Tracking Status</span>
+          <span class="val" style="font-size: 1.35rem; color: var(--accent-amber);">In-Transit</span>
+          <span style="font-size: 0.74rem; color: var(--text-dim);">Live GPS route status</span>
+        </div>
+        <div class="dispatch-kpi kpi-carrier">
+          <span class="lbl">CrewAI Dispatch Agent</span>
+          <span class="val" style="font-size: 1.35rem; color: var(--accent-cyan);">ACTIVE</span>
+          <span style="font-size: 0.74rem; color: var(--text-dim);">Automated verification armed</span>
+        </div>
+      </div>
+
+      <!-- DISPATCH CONTROLS & SEARCH BAR -->
+      <div class="dispatch-controls-bar">
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span style="font-weight: 700; font-size: 0.88rem; color: #fff;">📋 Outbound Delivery Challans</span>
+          <span class="status-badge">Fleet Ready</span>
+        </div>
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="dispatch-search-input" placeholder="Search Challan ID or Order..." />
+        </div>
+      </div>
+
+      <!-- CHALLANS GRID -->
+      <div class="dispatch-grid" id="dispatch-grid-container">
+        <div style="font-size: 0.85rem; color: var(--text-dim); padding: 30px; grid-column: 1 / -1; text-align: center;">Loading outbound delivery challans...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- PDF Preview Modal -->
+  <div id="pdf-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-md); width: 100%; max-width: 960px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.7);">
+      <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+        <div>
+          <span style="font-weight: 700; font-size: 0.95rem; color: #fff;" id="modal-invoice-title">Delivery Challan Preview</span>
+          <span class="framework-tag mcp" style="margin-left: 8px;">Physical Manifest</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <a id="modal-download-link" href="#" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 12px; text-decoration: none;">⬇ Download Challan PDF</a>
+          <button id="btn-close-modal" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">✕ Close</button>
+        </div>
+      </div>
+      <div style="flex: 1; position: relative;">
+        <iframe id="pdf-preview-iframe" src="about:blank" style="width: 100%; height: 100%; border: none; background: #fff;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allChallans = [];
+    let searchQuery = '';
+
+    const el = {
+      grid: document.getElementById('dispatch-grid-container'),
+      searchInput: document.getElementById('dispatch-search-input'),
+      refreshBtn: document.getElementById('btn-refresh-dispatch'),
+      totalBadge: document.getElementById('badge-total-challans'),
+      kpiTotal: document.getElementById('kpi-total-challans'),
+      modalBackdrop: document.getElementById('pdf-modal-backdrop'),
+      modalTitle: document.getElementById('modal-invoice-title'),
+      modalDownload: document.getElementById('modal-download-link'),
+      modalIframe: document.getElementById('pdf-preview-iframe'),
+      btnCloseModal: document.getElementById('btn-close-modal'),
+      toggleBtn: document.getElementById('sidebar-toggle-btn'),
+      sidebar: document.getElementById('app-sidebar')
+    };
+
+    if (el.toggleBtn && el.sidebar) {
+      el.toggleBtn.addEventListener('click', () => el.sidebar.classList.toggle('expanded'));
+      document.addEventListener('click', (e) => {
+        if (!el.sidebar.contains(e.target) && !el.toggleBtn.contains(e.target)) {
+          el.sidebar.classList.remove('expanded');
+        }
+      });
+    }
+
+    async function fetchChallans() {
+      try {
+        const res = await fetch('/api/invoices/list');
+        const data = await res.json();
+        const docs = data.invoices || [];
+        // STRICT FILTER: Only Delivery Challans (DC) for dispatch team
+        allChallans = docs.filter(d => d.type.includes('Delivery Challan') || d.id.startsWith('DC-'));
+        el.totalBadge.textContent = `${allChallans.length} Challans`;
+        el.kpiTotal.textContent = allChallans.length;
+        renderChallans();
+      } catch (err) {
+        console.error('Failed to fetch challans:', err);
+        el.grid.innerHTML = '<div style="color: var(--accent-rose); font-size: 0.85rem; padding: 20px; grid-column: 1 / -1; text-align: center;">Failed to load delivery challans.</div>';
+      }
+    }
+
+    function renderChallans() {
+      el.grid.innerHTML = '';
+      const query = searchQuery.trim().toLowerCase();
+
+      const filtered = allChallans.filter(c => {
+        if (!query) return true;
+        return (c.id || '').toLowerCase().includes(query) || (c.filename || '').toLowerCase().includes(query);
+      });
+
+      if (filtered.length === 0) {
+        el.grid.innerHTML = '<div style="font-size: 0.88rem; color: var(--text-dim); padding: 50px 20px; grid-column: 1 / -1; text-align: center; border: 1px dashed var(--border-glass); border-radius: var(--radius-md); background: rgba(255,255,255,0.01);"><div style="font-size: 1.6rem; margin-bottom: 8px;">🚚</div><strong>No active outbound delivery challans on file.</strong><div style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">When customer orders are confirmed, the CrewAI Dispatch Agent will generate the physical transport manifests here.</div></div>';
+        return;
+      }
+
+      filtered.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'challan-card';
+        card.innerHTML = `
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+              <span class="framework-tag mcp">📋 Delivery Challan</span>
+              <span class="status-badge">DISPATCHED</span>
+            </div>
+            <div class="challan-id" style="margin-top: 8px;">${c.id}</div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Destination: Logistics Hub North / Customer Facility</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono);">Carrier: Apex Express Freight</div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button class="btn btn-primary btn-preview-dc" style="flex: 1; padding: 7px 12px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>👁️</span> Print / View Manifest
+            </button>
+            <a href="${c.download_url}" target="_blank" class="btn btn-secondary" style="padding: 7px 12px; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Download PDF">
+              ⬇️
+            </a>
+          </div>
+        `;
+
+        card.querySelector('.btn-preview-dc').addEventListener('click', () => {
+          el.modalTitle.textContent = `Delivery Challan: ${c.id}`;
+          el.modalDownload.href = c.download_url;
+          el.modalIframe.src = c.preview_url;
+          el.modalBackdrop.style.display = 'flex';
+        });
+
+        el.grid.appendChild(card);
+      });
+    }
+
+    function closeModal() {
+      el.modalBackdrop.style.display = 'none';
+      el.modalIframe.src = 'about:blank';
+    }
+
+    el.btnCloseModal.addEventListener('click', closeModal);
+    el.modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === el.modalBackdrop) closeModal();
+    });
+
+    el.searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderChallans();
+    });
+
+    el.refreshBtn.addEventListener('click', fetchChallans);
+
+    fetchChallans();
+  </script>
+</body>
+</html>

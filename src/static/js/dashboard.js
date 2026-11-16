@@ -222,6 +222,9 @@ class DashboardController {
     this.renderer.renderA2AMessages(state.pending_events);
     this.renderer.renderExecutionTrace(state.execution_trace);
     this.updateTelemetry(state.execution_trace);
+    if (this.storefront && typeof this.storefront.fetchInvoices === "function") {
+      this.storefront.fetchInvoices();
+    }
   }
 
   updateTelemetry(traces) {

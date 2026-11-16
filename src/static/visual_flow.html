@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WareSync AI - End-to-End Visual Agent Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <style>
+    :root {
+      --flow-cyan: #00f0ff;
+      --flow-purple: #8b5cf6;
+      --flow-emerald: #10b981;
+      --flow-rose: #f43f5e;
+      --flow-amber: #f59e0b;
+      --flow-card-bg: rgba(15, 23, 42, 0.75);
+      --flow-border: rgba(255, 255, 255, 0.08);
+    }
+
+    body {
+      background: radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.08), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08), transparent 40%),
+                  #070b14;
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+
+    .flow-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Top navigation banner */
+    .flow-navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--flow-border);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+
+    .flow-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .flow-brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--flow-cyan), var(--flow-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+
+    .flow-nav-links {
+      display: flex;
+      gap: 10px;
+    }
+
+    .flow-nav-btn {
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--flow-border);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .flow-nav-btn:hover, .flow-nav-btn.active {
+      background: rgba(0, 240, 255, 0.12);
+      color: #fff;
+      border-color: rgba(0, 240, 255, 0.4);
+    }
+
+    /* Interactive Simulation Hero Control Bar */
+    .control-hero-bar {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.85));
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1.2fr 1fr 1fr auto;
+      gap: 16px;
+      align-items: flex-end;
+    }
+
+    .ctrl-group label {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .ctrl-select, .ctrl-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+    }
+
+    .ctrl-select:focus, .ctrl-input:focus {
+      border-color: var(--flow-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    }
+
+    .btn-run-simulation {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-run-simulation:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Live Pipeline Stages Visual Track */
+    .pipeline-stage-track {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .stage-card {
+      background: var(--flow-card-bg);
+      border: 1px solid var(--flow-border);
+      border-radius: 14px;
+      padding: 18px;
+      position: relative;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
+    }
+
+    .stage-card.active-pulse {
+      border-color: var(--flow-cyan);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+      background: rgba(14, 165, 233, 0.1);
+    }
+
+    .stage-card.warning-breach {
+      border-color: var(--flow-rose);
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.25);
+      background: rgba(244, 63, 94, 0.08);
+    }
+
+    .stage-card.success-complete {
+      border-color: var(--flow-emerald);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .stage-number {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .stage-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stage-agent-badge {
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .badge-adk {
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--flow-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+    }
+
+    .badge-crewai {
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--flow-purple);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .stage-body {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .shortage-callout {
+      background: rgba(244, 63, 94, 0.18);
+      border-left: 3px solid var(--flow-rose);
+      padding: 8px 10px;
+      border-radius: 4px;
+      color: #fecdd3;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .stage-footer {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+    }
+
+    /* Live Admin Alert Banner */
+    .admin-alert-banner {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(245, 158, 11, 0.15));
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .alert-text-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .alert-icon-pulse {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(244, 63, 94, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
+      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+
+    /* Dual Detail Visualizers: A2A Message Terminal + Invoices Grid */
+    .detail-columns {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+
+    .detail-panel {
+      background: var(--flow-card-bg);
+      border: 1px solid var(--flow-border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .panel-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .a2a-terminal {
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      line-height: 1.5;
+      color: #38bdf8;
+      height: 280px;
+      overflow-y: auto;
+    }
+
+    .doc-mini-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .doc-mini-card:hover {
+      border-color: var(--flow-cyan);
+      background: rgba(0, 240, 255, 0.04);
+    }
+
+    .btn-view-doc {
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--flow-cyan);
+      color: var(--flow-cyan);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    @media (max-width: 1200px) {
+      .pipeline-stage-track {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .control-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .detail-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="flow-container">
+    <!-- Navbar Header -->
+    <header class="flow-navbar">
+      <div class="flow-brand">
+        <div class="flow-brand-logo">⚡</div>
+        <div>
+          <h2 style="font-size: 1.15rem; font-weight: 800; margin: 0; color: #fff;">WareSync AI Visual Flow</h2>
+          <div style="font-size: 0.72rem; color: #94a3b8;">End-to-End Autonomous Agentic Pipeline & Deficit Auto-Restock</div>
+        </div>
+      </div>
+      <div class="flow-nav-links">
+        <a href="/" class="flow-nav-btn">🖥️ Cockpit</a>
+        <a href="/customer.html" class="flow-nav-btn">🛒 Customer Storefront</a>
+        <a href="/dispatch.html" class="flow-nav-btn">🚚 Dispatch Portal</a>
+        <a href="/invoices.html" class="flow-nav-btn">📄 Invoices & Challans</a>
+        <a href="/visual_flow.html" class="flow-nav-btn active">⚡ Visual Flow</a>
+      </div>
+    </header>
+
+    <!-- Interactive Simulation Controls -->
+    <section class="control-hero-bar">
+      <div class="control-grid">
+        <div class="ctrl-group">
+          <label>Select Catalog Item</label>
+          <select id="sim-sku-select" class="ctrl-select">
+            <option value="SKU-1002" selected>SKU-1002: Hydraulic Forklift Valve ($45.00)</option>
+            <option value="SKU-1001">SKU-1001: Industrial Conveyor Belt ($250.00)</option>
+            <option value="SKU-1003">SKU-1003: Barcode Scanner Unit ($85.00)</option>
+          </select>
+        </div>
+
+        <div class="ctrl-group">
+          <label>Order Quantity (Test Shortage)</label>
+          <input type="number" id="sim-qty-input" class="ctrl-input" value="15" min="1" max="100" />
+        </div>
+
+        <div class="ctrl-group">
+          <label>Customer Organization</label>
+          <input type="text" id="sim-customer-input" class="ctrl-input" value="Apex Precision Logistics Hub" />
+        </div>
+
+        <div class="ctrl-group">
+          <label>Auto Factory Restock</label>
+          <select id="sim-auto-restock" class="ctrl-select">
+            <option value="true" selected>Enabled (Auto-Bulk Cascade)</option>
+            <option value="false">Manual Approval</option>
+          </select>
+        </div>
+
+        <div>
+          <button id="btn-run-visual-sim" class="btn-run-simulation">
+            <span>🚀 Run Visual Simulation</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-time Admin Alert Banner -->
+    <div id="flow-admin-alert" class="admin-alert-banner" style="display: none;">
+      <div class="alert-text-group">
+        <div class="alert-icon-pulse">⚠️</div>
+        <div>
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--flow-rose); letter-spacing: 0.05em;">Admin Cockpit Alert Event</div>
+          <div id="flow-alert-message" style="font-size: 0.88rem; font-weight: 700; color: #fff;">Stock Shortage Detected! Automated Procurement PO Triggered.</div>
+        </div>
+      </div>
+      <div>
+        <a href="/" target="_blank" class="flow-nav-btn" style="border-color: var(--flow-rose); color: #fff;">View in Cockpit →</a>
+      </div>
+    </div>
+
+    <!-- Interactive Human-In-The-Loop Approval Modal Overlay -->
+    <div id="manual-approval-modal" style="display: none; position: fixed; inset: 0; background: rgba(5, 7, 15, 0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center;">
+      <div style="background: linear-gradient(135deg, #131b2e 0%, #0d121f 100%); border: 2px solid var(--flow-amber); border-radius: 14px; max-width: 520px; width: 90%; padding: 26px; box-shadow: 0 20px 50px rgba(245, 158, 11, 0.25); animation: pulseModal 2s infinite alternate;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(245, 158, 11, 0.2); border: 2px solid var(--flow-amber); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            ✋
+          </div>
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0;">Supervisor Approval Required</h3>
+            <div style="font-size: 0.75rem; color: var(--flow-amber); font-weight: 600;">HUMAN-IN-THE-LOOP SAFETY GATE ACTIVATED</div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 18px;">
+          The inventory level has breached safe thresholds. The <strong>CrewAI Procurement Agent</strong> has generated a restock proposal but cannot commit capital without your explicit authorization.
+        </p>
+
+        <div id="modal-approval-details" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 14px; margin-bottom: 22px; font-size: 0.82rem; font-family: var(--flow-mono);">
+          <!-- Dynamic details injected here -->
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button id="modal-btn-reject" class="flow-nav-btn" style="border-color: var(--flow-rose); color: var(--flow-rose); padding: 8px 18px; font-weight: 700; cursor: pointer;">
+            ✕ Reject & Cancel PO
+          </button>
+          <button id="modal-btn-approve" class="btn-run-simulation" style="padding: 8px 24px; font-weight: 700; font-size: 0.88rem; cursor: pointer; background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+            ✓ Approve Restock PO
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6-Stage Visual Agent Pipeline Track -->
+    <h3 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.04em;">
+      Autonomous Multi-Agent Order Execution Pipeline
+    </h3>
+
+    <div class="pipeline-stage-track">
+      <!-- Stage 1: Customer Order -->
+      <div class="stage-card" id="stage-card-1">
+        <div>
+          <span class="stage-number">STAGE 1</span>
+          <div class="stage-title">🛒 Customer Order</div>
+          <span class="stage-agent-badge badge-crewai">Gemini Order Bot</span>
+          <div class="stage-body" id="stage-body-1">
+            Waiting for simulation trigger. Customer selects product and submits requested units.
+          </div>
+        </div>
+        <div class="stage-footer">
+          <span style="color: #64748b;">Status:</span>
+          <span id="stage-status-1" style="font-weight: 700; color: #94a3b8;">IDLE</span>
+        </div>
+      </div>
+
+      <!-- Stage 2: Guardrail Verification -->
+      <div class="stage-card" id="stage-card-2">
+        <div>
+          <span class="stage-number">STAGE 2</span>
+          <div class="stage-title">🛡️ Guardrail Check</div>
+          <span class="stage-agent-badge" style="background: rgba(16,185,129,0.15); color: var(--flow-emerald); border: 1px solid rgba(16,185,129,0.3);">Security Layer</span>
+          <div class="stage-body" id="stage-body-2">
+            Inspects prompt injection, SQL signatures, and parameter boundaries before execution.
+          </div>
+        </div>
+        <div class="stage-footer">
+          <span style="color: #64748b;">Status:</span>
+          <span id="stage-status-2" style="font-weight: 700; color: #94a3b8;">WAITING</span>
+        </div>
+      </div>
+
+      <!-- Stage 3: Inventory Agent Check (ADK) -->
+      <div class="stage-card" id="stage-card-3">
+        <div>
+          <span class="stage-number">STAGE 3</span>
+          <div class="stage-title">📦 Stock Verification</div>
+          <span class="stage-agent-badge badge-adk">InventoryAgent (ADK)</span>
+          <div class="stage-body" id="stage-body-3">
+            Real-time FastMCP ledger check. Flags shortage deficit if requested units exceed stock.
+          </div>
+        </div>
+        <div class="stage-footer">
+          <span style="color: #64748b;">Status:</span>
+          <span id="stage-status-3" style="font-weight: 700; color: #94a3b8;">WAITING</span>
+        </div>
+      </div>
+
+      <!-- Stage 4: A2A Inter-Agent Handoff -->
+      <div class="stage-card" id="stage-card-4">
+        <div>
+          <span class="stage-number">STAGE 4</span>
+          <div class="stage-title">🔄 A2A Protocol Handoff</div>
+          <span class="stage-agent-badge" style="background: rgba(245,158,11,0.15); color: var(--flow-amber); border: 1px solid rgba(245,158,11,0.3);">A2A Bridge</span>
+          <div class="stage-body" id="stage-body-4">
+            ADK notifies CrewAI with structured JSON payload: <code>STOCK_DEFICIT_TRIGGER</code>.
+          </div>
+        </div>
+        <div class="stage-footer">
+          <span style="color: #64748b;">Status:</span>
+          <span id="stage-status-4" style="font-weight: 700; color: #94a3b8;">WAITING</span>
+        </div>
+      </div>
+
+      <!-- Stage 5: Factory Bulk Restock -->
+      <div class="stage-card" id="stage-card-5">
+        <div>
+          <span class="stage-number">STAGE 5</span>
+          <div class="stage-title">🏭 Bulk Factory Restock</div>
+          <span class="stage-agent-badge badge-crewai">ProcurementAgent</span>
+          <div class="stage-body" id="stage-body-5">
+            Auto-generates Factory PO, replenishes physical ledger, and logs Supplier Invoice (AP).
+          </div>
+        </div>
+        <div class="stage-footer">
+          <span style="color: #64748b;">Status:</span>
+          <span id="stage-status-5" style="font-weight: 700; color: #94a3b8;">WAITING</span>
+        </div>
+      </div>
+
+      <!-- Stage 6: Dispatch & Billing Hand-off -->
+      <div class="stage-card" id="stage-card-6">
+        <div>
+          <span class="stage-number">STAGE 6</span>
+          <div class="stage-title">🚚 Dispatch & Billing</div>
+          <span class="stage-agent-badge badge-crewai">DispatchAgent</span>
+          <div class="stage-body" id="stage-body-6">
+            Packs available units, issues Delivery Challan (DC) & official Customer Invoice (AR).
+          </div>
+        </div>
+        <div class="stage-footer">
+          <span style="color: #64748b;">Status:</span>
+          <span id="stage-status-6" style="font-weight: 700; color: #94a3b8;">WAITING</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Telemetry Inspector & Generated Documents -->
+    <div class="detail-columns">
+      <!-- LEFT: Live A2A Protocol Wire & Trace Stream -->
+      <div class="detail-panel">
+        <div class="panel-hdr">
+          <div class="panel-title">📡 Live Inter-Agent Communication (A2A Wire)</div>
+          <span id="flow-latency-badge" style="font-size: 0.72rem; color: var(--flow-cyan); font-weight: 700;">Latency: -- ms</span>
+        </div>
+        <div class="a2a-terminal" id="flow-a2a-terminal">
+// A2A Inter-Agent Communication Bus Initialized
+// Ready to trace ADK <-> CrewAI telemetry events...
+        </div>
+      </div>
+
+      <!-- RIGHT: Generated Official Invoices & Challans -->
+      <div class="detail-panel">
+        <div class="panel-hdr">
+          <div class="panel-title">📑 Official Dispatch & Supplier Invoices Generated</div>
+          <span style="font-size: 0.72rem; color: var(--flow-emerald); font-weight: 700;">Live PDF Engine</span>
+        </div>
+        <div id="flow-docs-container">
+          <div style="font-size: 0.8rem; color: #64748b; padding: 20px 0; text-align: center;">
+            Run a visual simulation above to generate official Delivery Challans (DC), Customer Invoices (AR), and Factory Restock Invoices (AP).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Embedded Visual Document Viewer -->
+    <div class="detail-panel" style="margin-top: 24px;">
+      <div class="panel-hdr">
+        <div class="panel-title">
+          <span>🖼️ Visual Document Inspector</span>
+          <span id="viewer-doc-title" style="font-size: 0.78rem; font-weight: 700; color: var(--flow-cyan); margin-left: 8px;">Select a document above to preview</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-quick-customer-inv" class="btn-view-doc" style="background: rgba(16, 185, 129, 0.15); border-color: var(--flow-emerald); color: var(--flow-emerald);">📄 Customer Invoice</button>
+          <button id="btn-quick-challan" class="btn-view-doc" style="background: rgba(0, 240, 255, 0.15); border-color: var(--flow-cyan); color: var(--flow-cyan);">🚚 Delivery Challan</button>
+        </div>
+      </div>
+      <div style="width: 100%; height: 560px; background: #000; border: 1px solid var(--flow-border); border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <iframe id="flow-doc-iframe" src="/api/invoices/download/INV-CUST-96841?type=customer" style="width: 100%; height: 100%; border: none; background: #fff;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/visual_flow.js"></script>
+</body>
+</html>

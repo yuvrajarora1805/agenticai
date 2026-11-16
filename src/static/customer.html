@@ -3,19 +3,178 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WareSync - Customer Storefront & Portal</title>
+  <title>WareSync - Customer Storefront & Ordering Bot</title>
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    .storefront-container { width: 100%; padding: 24px; }
-    .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
-    .product-card { padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
-    .product-price { font-size: 1.3rem; font-weight: 800; color: var(--accent-cyan); }
-    .stock-pill { padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; width: fit-content; }
-    .chat-bubble { padding: 12px 16px; border-radius: var(--radius-sm); margin-top: 10px; line-height: 1.5; font-size: 0.85rem; }
-    .chat-bubble.agent { background: rgba(0, 240, 255, 0.08); border-left: 3px solid var(--accent-cyan); color: var(--text-main); }
+    .storefront-container {
+      width: 100%;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Interactive 2-Column Storefront Layout */
+    .storefront-columns {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .product-card {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      transition: var(--transition-smooth);
+    }
+
+    .product-card:hover {
+      border-color: rgba(0, 240, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .product-price {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+
+    /* Dedicated Gemini Ordering Bot Panel */
+    .bot-card-panel {
+      background: var(--bg-surface-elevated);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.08);
+      position: sticky;
+      top: 76px;
+    }
+
+    .bot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .bot-avatar-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bot-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .chat-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      min-height: 220px;
+      max-height: 360px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-box::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-box::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .chat-box::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.25);
+      border-radius: 4px;
+    }
+
+    .chat-bubble {
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      line-height: 1.6;
+      font-size: 0.84rem;
+      word-break: break-word;
+      white-space: pre-line;
+    }
+
+    .chat-bubble.bot {
+      background: rgba(0, 240, 255, 0.08);
+      border-left: 3px solid var(--accent-cyan);
+      color: #e2e8f0;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chat-input-row input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      color: #fff;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    .chat-input-row input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .guardrail-tag {
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    @media (max-width: 1024px) {
+      .storefront-columns {
+        grid-template-columns: 1fr;
+      }
+      .bot-card-panel {
+        position: static;
+      }
+    }
   </style>
 </head>
 <body class="app-layout">
@@ -36,6 +195,14 @@
           <span class="nav-icon">📦</span>
           <span class="nav-text">Operations Cockpit</span>
         </a>
+        <a href="/dispatch.html" class="sidebar-link" title="Dispatch Team">
+          <span class="nav-icon">🚚</span>
+          <span class="nav-text">Dispatch Team</span>
+        </a>
+        <a href="/invoices.html" class="sidebar-link" title="Invoices & Challans">
+          <span class="nav-icon">📄</span>
+          <span class="nav-text">Invoices & Challans</span>
+        </a>
         <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
           <span class="nav-icon">🧩</span>
           <span class="nav-text">Microservices Fleet</span>
@@ -48,6 +215,10 @@
           <span class="nav-icon">🛒</span>
           <span class="nav-text">Customer Storefront</span>
         </a>
+        <a href="/visual_flow.html" class="sidebar-link" title="Visual Agent Pipeline">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-text">Visual Agent Flow</span>
+        </a>
         <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
           <span class="nav-icon">📖</span>
           <span class="nav-text">API Swagger Docs</span>
@@ -56,8 +227,8 @@
     </div>
 
     <div class="sidebar-footer">
-      <a href="/" class="btn btn-secondary" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.75rem; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-        <span class="btn-icon">⬅</span> <span class="btn-label">Back to Operations</span>
+      <a href="/" class="btn" title="Return to Operations Cockpit" style="width: 100%; text-decoration: none; text-align: center; font-size: 0.78rem; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0, 240, 255, 0.12); border: 1px solid var(--accent-cyan); color: #ffffff; font-weight: 700; border-radius: var(--radius-sm);">
+        <span class="btn-icon">⬅</span> <span class="btn-label" style="color: #ffffff;">Back to Cockpit</span>
       </a>
     </div>
   </aside>
@@ -67,65 +238,104 @@
     <header class="app-topbar">
       <div style="display: flex; align-items: center; gap: 10px;">
         <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
-        <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">B2B Autonomous Ordering Portal</span>
-        <span class="stock-pill" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.65rem;">● Connected</span>
+        <span style="font-size: 0.88rem; font-weight: 700; color: #fff;">B2B Autonomous Customer Ordering Portal</span>
+        <span class="guardrail-tag">🛡️ Guardrails Armed</span>
       </div>
-      <div style="display: flex; gap: 10px;">
-        <a href="/" class="btn btn-secondary" style="text-decoration: none; font-size: 0.75rem; padding: 5px 12px;">
-          ⚙️ Admin Operations
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span class="stock-pill" style="background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan); font-size: 0.72rem;">✨ Powered by Gemini 1.5 Flash</span>
+        <a href="/" class="btn" style="text-decoration: none; font-size: 0.78rem; font-weight: 700; padding: 7px 14px; background: rgba(99, 102, 241, 0.25); border: 1px solid var(--accent-blue); color: #ffffff; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 6px;">
+          <span>⚙️</span> <span style="color: #ffffff;">Admin Operations</span>
         </a>
       </div>
     </header>
 
     <main class="storefront-container">
-      <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Warehouse Product Catalog</h2>
-        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Select an industrial component to check live stock, inquire with the ADK Inventory Agent, and confirm dispatch.</p>
+      <div>
+        <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff;">Warehouse Storefront & Ordering Assistant</h2>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Inquire with the AI Order Bot for live stock availability, customized freight quotes, and instant invoice generation.</p>
       </div>
 
-      <!-- Active Products Catalog -->
-      <div class="catalog-grid" id="customer-catalog-grid">
-        <!-- Populated dynamically via JS -->
+      <!-- MAIN 2-COLUMN STAGE: CATALOG ON LEFT, DEDICATED ORDER BOT ON RIGHT -->
+      <div class="storefront-columns">
+        
+        <!-- LEFT: Active Products Catalog -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff;">Industrial Catalog</h3>
+            <span style="font-size: 0.72rem; color: var(--text-dim);">Live Warehouse Stock</span>
+          </div>
+          <div class="catalog-grid" id="customer-catalog-grid">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- RIGHT: Dedicated Permanent Gemini Ordering Bot Panel -->
+        <div class="bot-card-panel">
+          <div class="bot-header">
+            <div class="bot-avatar-badge">
+              <div class="bot-icon">🤖</div>
+              <div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #fff;">Gemini Order Bot</div>
+                <div style="font-size: 0.68rem; color: var(--accent-cyan);">ADK & CrewAI Sales Assistant</div>
+              </div>
+            </div>
+            <span class="guardrail-tag">● ACTIVE</span>
+          </div>
+
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            Active Item: <strong id="bot-selected-item-label" style="color: var(--accent-cyan);">None (Select a product or ask below)</strong>
+          </div>
+
+          <!-- Chat Conversation Display -->
+          <div class="chat-box" id="bot-chat-history">
+            <div class="chat-bubble bot">
+              👋 <strong>Gemini Order Bot:</strong> Hello! Ask me anything about our live warehouse inventory, pricing, or dispatch policies, or click <strong>Ask Bot & Order</strong> on any product to prepare an immediate dispatch.
+            </div>
+          </div>
+
+          <!-- Chat Inquiry Input & Submit -->
+          <div class="chat-input-row">
+            <input type="text" id="bot-user-note-input" placeholder="Ask question (e.g. shipping time, bulk quote)..." />
+            <button id="btn-bot-send-inquiry" class="btn btn-primary" style="padding: 8px 14px; font-size: 0.8rem; font-weight: 700;">
+              Inquire
+            </button>
+          </div>
+
+          <!-- Order Confirmation Action Deck -->
+          <div id="bot-actions-deck" style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+            <button id="btn-drawer-confirm-order" class="btn btn-primary" style="padding: 10px 16px; font-weight: 700; font-size: 0.85rem; width: 100%;">
+              ✅ Confirm & Place Order Now
+            </button>
+          </div>
+
+          <!-- Order Dispatched Success Notification -->
+          <div id="drawer-order-success" style="display: none; padding: 12px; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.12); border: 1px solid var(--accent-emerald);">
+            <div id="drawer-success-msg" style="font-size: 0.82rem; color: var(--accent-emerald); font-weight: 700;">
+              Order Placed & Dispatched!
+            </div>
+            <div id="drawer-docs-row" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;"></div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Live Customer Conversation & Confirmation Modal / Drawer -->
-      <div id="customer-order-drawer" class="glass-panel" style="display: none; margin-top: 30px; padding: 24px; border: 1px solid var(--accent-cyan);">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h3 id="drawer-item-title" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">Inquiry: SKU-1002</h3>
-          <button id="btn-close-drawer" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">✕ Close</button>
-        </div>
-
-        <div class="chat-bubble agent" id="drawer-chat-bubble">
-          Checking inventory with the ADK Inventory Agent...
-        </div>
-
-        <div id="drawer-actions-row" style="display: flex; gap: 12px; margin-top: 16px;">
-          <button id="btn-drawer-confirm-order" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; font-size: 0.9rem;">
-            ✅ Confirm & Place Order Now
-          </button>
-        </div>
-
-        <!-- Generated Documents Result Box -->
-        <div id="drawer-order-success" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-glass);">
-          <div id="drawer-success-msg" style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 700; margin-bottom: 8px;">Order Successfully Dispatched & Cryptographically Signed!</div>
-          <div id="drawer-docs-row" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
-        </div>
-      </div>
-
-      <!-- Customer Invoices & Challans Archive -->
-      <section style="margin-top: 36px;">
+      <!-- Customer Invoices Archive (AR) -->
+      <section style="margin-top: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Issued Delivery Challans & Invoices</h3>
-          <button id="btn-cust-refresh-invoices" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">↻ Refresh Docs</button>
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">My Order Invoices & Receipts (AR)</h3>
+            <p style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">Official tax billing invoices generated from orders placed in this session</p>
+          </div>
+          <button id="btn-cust-refresh-invoices" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">↻ Refresh Invoices</button>
         </div>
         <div id="customer-invoices-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
-          <div style="color: var(--text-dim); font-size: 0.85rem;">Loading issued documents...</div>
+          <div style="color: var(--text-dim); font-size: 0.85rem;">Loading issued invoices...</div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- PDF Preview Modal for Customer Storefront -->
+  <!-- PDF Preview Modal -->
   <div id="cust-pdf-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-md); width: 100%; max-width: 900px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.7);">
       <div style="padding: 12px 18px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">

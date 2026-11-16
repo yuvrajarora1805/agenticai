@@ -44,3 +44,8 @@ htmlcov/
 
 # Temporary files
 *.log
+
+# Environment variables & secrets
+.env
+*.env
+.env.*

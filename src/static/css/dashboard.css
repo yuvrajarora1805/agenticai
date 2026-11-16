@@ -376,11 +376,59 @@ body {
   margin-bottom: 12px;
 }
 
+/* Standard Unified Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-main);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-decoration: none;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 240, 255, 0.16) !important;
+  border-color: var(--accent-cyan) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.sidebar-footer .btn,
+.sidebar-footer .btn-secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-footer .btn:hover,
+.sidebar-footer .btn-secondary:hover {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
+}
+
 .btn-primary {
   width: 100%;
   background: linear-gradient(135deg, #0284c7, #6366f1);
   border: none;
-  color: #ffffff;
+  color: #ffffff !important;
   padding: 11px 16px;
   border-radius: var(--radius-sm);
   font-weight: 600;

@@ -12,18 +12,9 @@ from src.server.pdf_generator import InvoicePDFGenerator, INVOICE_STORAGE_DIR
 
 router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
 
-# Seed initial demonstration invoices if not already on disk
+# Seed initial demonstration supplier invoices if not already on disk
 def seed_demo_invoices():
-    # Customer Invoice (AR)
-    InvoicePDFGenerator.generate_customer_invoice(
-        invoice_num="INV-CUST-2026-001",
-        order_id="ORD-1001",
-        customer_name="Global Freight Logistics Inc.",
-        items=[
-            {"sku": "SKU-1001", "name": "Industrial Conveyor Belt", "quantity": 5, "unit_price": 250.0},
-            {"sku": "SKU-1002", "name": "Hydraulic Forklift Valve", "quantity": 4, "unit_price": 45.0},
-        ]
-    )
+    # Keep customer invoice storage empty until actual orders are placed by the customer
 
     # Supplier Invoice Perfect Match (AP)
     InvoicePDFGenerator.generate_supplier_invoice(
@@ -52,57 +43,62 @@ seed_demo_invoices()
 
 @router.get("/list")
 def list_invoices() -> Dict[str, List[Dict[str, Any]]]:
-    """Lists all stored Customer and Supplier PDF invoices with metadata."""
+    """Lists all stored Customer and Supplier PDF invoices sorted with most recent on top."""
     results = []
 
-    # Read Customer Invoices
+    def get_sorted_files(directory: str):
+        if not os.path.exists(directory):
+            return []
+        files = [f for f in os.listdir(directory) if f.endswith(".pdf")]
+        # Sort by creation/modification timestamp descending (newest first)
+        files.sort(key=lambda f: os.path.getmtime(os.path.join(directory, f)), reverse=True)
+        return files
+
+    # Read Customer Invoices (Most recent first)
     cust_dir = os.path.join(INVOICE_STORAGE_DIR, "customer")
-    if os.path.exists(cust_dir):
-        for f in sorted(os.listdir(cust_dir)):
-            if f.endswith(".pdf"):
-                inv_id = f.replace(".pdf", "")
-                results.append({
-                    "id": inv_id,
-                    "filename": f,
-                    "type": "Customer (AR)",
-                    "category": "Customer Invoicing",
-                    "status": "ISSUED",
-                    "preview_url": f"/api/invoices/preview/{inv_id}?type=customer",
-                    "download_url": f"/api/invoices/download/{inv_id}?type=customer",
-                })
+    for f in get_sorted_files(cust_dir):
+        inv_id = f.replace(".pdf", "")
+        results.append({
+            "id": inv_id,
+            "filename": f,
+            "type": "Customer (AR)",
+            "category": "Customer Invoicing",
+            "status": "ISSUED",
+            "mtime": os.path.getmtime(os.path.join(cust_dir, f)),
+            "preview_url": f"/api/invoices/preview/{inv_id}?type=customer",
+            "download_url": f"/api/invoices/download/{inv_id}?type=customer",
+        })
 
-    # Read Supplier Invoices
-    supp_dir = os.path.join(INVOICE_STORAGE_DIR, "supplier")
-    if os.path.exists(supp_dir):
-        for f in sorted(os.listdir(supp_dir)):
-            if f.endswith(".pdf"):
-                inv_id = f.replace(".pdf", "")
-                is_mismatch = "991" in f
-                results.append({
-                    "id": inv_id,
-                    "filename": f,
-                    "type": "Supplier (AP)",
-                    "category": "Supplier Invoicing",
-                    "status": "DISCREPANCY_HELD" if is_mismatch else "VERIFIED_MATCH",
-                    "preview_url": f"/api/invoices/preview/{inv_id}?type=supplier",
-                    "download_url": f"/api/invoices/download/{inv_id}?type=supplier",
-                })
-
-    # Read Delivery Challans (DC)
+    # Read Delivery Challans (DC) (Most recent first)
     dc_dir = os.path.join(INVOICE_STORAGE_DIR, "challans")
-    if os.path.exists(dc_dir):
-        for f in sorted(os.listdir(dc_dir)):
-            if f.endswith(".pdf"):
-                dc_id = f.replace(".pdf", "")
-                results.append({
-                    "id": dc_id,
-                    "filename": f,
-                    "type": "Delivery Challan (DC)",
-                    "category": "Dispatch Logistics",
-                    "status": "DISPATCHED",
-                    "preview_url": f"/api/invoices/preview/{dc_id}?type=challans",
-                    "download_url": f"/api/invoices/download/{dc_id}?type=challans",
-                })
+    for f in get_sorted_files(dc_dir):
+        dc_id = f.replace(".pdf", "")
+        results.append({
+            "id": dc_id,
+            "filename": f,
+            "type": "Delivery Challan (DC)",
+            "category": "Dispatch Logistics",
+            "status": "DISPATCHED",
+            "mtime": os.path.getmtime(os.path.join(dc_dir, f)),
+            "preview_url": f"/api/invoices/preview/{dc_id}?type=challans",
+            "download_url": f"/api/invoices/download/{dc_id}?type=challans",
+        })
+
+    # Read Supplier Invoices (Most recent first)
+    supp_dir = os.path.join(INVOICE_STORAGE_DIR, "supplier")
+    for f in get_sorted_files(supp_dir):
+        inv_id = f.replace(".pdf", "")
+        is_mismatch = "991" in f
+        results.append({
+            "id": inv_id,
+            "filename": f,
+            "type": "Supplier (AP)",
+            "category": "Supplier Invoicing",
+            "status": "DISCREPANCY_HELD" if is_mismatch else "VERIFIED_MATCH",
+            "mtime": os.path.getmtime(os.path.join(supp_dir, f)),
+            "preview_url": f"/api/invoices/preview/{inv_id}?type=supplier",
+            "download_url": f"/api/invoices/download/{inv_id}?type=supplier",
+        })
 
     return {"invoices": results}
 
@@ -110,18 +106,43 @@ def list_invoices() -> Dict[str, List[Dict[str, Any]]]:
 @router.get("/preview/{invoice_id}")
 def preview_invoice(invoice_id: str, type: str = "customer"):
     """Serves inline PDF for browser iframe preview."""
+    clean_id = invoice_id.replace(".pdf", "")
     subdir = "customer" if type == "customer" else ("supplier" if type == "supplier" else "challans")
-    filepath = os.path.join(INVOICE_STORAGE_DIR, subdir, f"{invoice_id}.pdf")
+    filepath = os.path.join(INVOICE_STORAGE_DIR, subdir, f"{clean_id}.pdf")
     if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail=f"Invoice PDF {invoice_id} not found")
-    return FileResponse(filepath, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename={invoice_id}.pdf"})
+        # Fallback check across all subdirs
+        for sd in ["customer", "challans", "supplier"]:
+            candidate = os.path.join(INVOICE_STORAGE_DIR, sd, f"{clean_id}.pdf")
+            if os.path.exists(candidate):
+                filepath = candidate
+                break
+        else:
+            raise HTTPException(status_code=404, detail=f"Invoice PDF {clean_id} not found")
+
+    return FileResponse(
+        filepath,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename={clean_id}.pdf",
+            "Access-Control-Allow-Origin": "*",
+            "X-Frame-Options": "SAMEORIGIN",
+        }
+    )
 
 
 @router.get("/download/{invoice_id}")
 def download_invoice(invoice_id: str, type: str = "customer"):
     """Downloads the invoice PDF with attachment header."""
+    clean_id = invoice_id.replace(".pdf", "")
     subdir = "customer" if type == "customer" else ("supplier" if type == "supplier" else "challans")
-    filepath = os.path.join(INVOICE_STORAGE_DIR, subdir, f"{invoice_id}.pdf")
+    filepath = os.path.join(INVOICE_STORAGE_DIR, subdir, f"{clean_id}.pdf")
     if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail=f"Invoice PDF {invoice_id} not found")
-    return FileResponse(filepath, media_type="application/pdf", filename=f"{invoice_id}.pdf")
+        for sd in ["customer", "challans", "supplier"]:
+            candidate = os.path.join(INVOICE_STORAGE_DIR, sd, f"{clean_id}.pdf")
+            if os.path.exists(candidate):
+                filepath = candidate
+                break
+        else:
+            raise HTTPException(status_code=404, detail=f"Invoice PDF {clean_id} not found")
+
+    return FileResponse(filepath, media_type="application/pdf", filename=f"{clean_id}.pdf")

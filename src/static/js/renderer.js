@@ -35,9 +35,9 @@ export class DashboardRenderer {
 
   renderPOsAndInvoices(purchaseOrders, invoices, activeOrders) {
     this.el.poInvoicesContainer.innerHTML = "";
-    const poList = Object.values(purchaseOrders || {});
-    const invList = Object.values(invoices || {});
-    const ordList = Object.values(activeOrders || {});
+    const poList = Object.values(purchaseOrders || {}).reverse();
+    const invList = Object.values(invoices || {}).reverse();
+    const ordList = Object.values(activeOrders || {}).reverse();
 
     if (poList.length === 0 && invList.length === 0 && ordList.length === 0) {
       this.el.poInvoicesContainer.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">No pending customer orders, purchase orders, or discrepancies.</div>';
@@ -48,13 +48,23 @@ export class DashboardRenderer {
     ordList.forEach((ord) => {
       const card = document.createElement("div");
       card.style.cssText = "background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 10px;";
+      const invNum = ord.invoice_number || `INV-CUST-${ord.order_id.replace('ORD-', '')}`;
+      const dcNum = ord.challan_number || `DC-${ord.order_id.replace('ORD-', '')}`;
       card.innerHTML = `
         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600;">
           <span>🛒 Customer Order: ${ord.order_id}</span>
           <span style="color: var(--accent-emerald); font-weight: 700;">$${ord.total_amount || 0}</span>
         </div>
         <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-          Customer: ${ord.customer} | ${ord.quantity}x ${ord.sku} | Challan: ${ord.challan_number || 'N/A'} | Status: <strong style="color: var(--accent-emerald);">${ord.status}</strong>
+          Customer: <strong>${ord.customer}</strong> | ${ord.quantity}x ${ord.sku} | Status: <strong style="color: var(--accent-emerald);">${ord.status}</strong>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <a href="/api/invoices/preview/${invNum}?type=customer" target="_blank" class="btn btn-primary" style="padding: 3px 8px; font-size: 0.68rem; text-decoration: none;">
+            📄 View Invoice (${invNum})
+          </a>
+          <a href="/api/invoices/preview/${dcNum}?type=challans" target="_blank" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.68rem; text-decoration: none;">
+            🚚 View Challan (${dcNum})
+          </a>
         </div>
       `;
       this.el.poInvoicesContainer.appendChild(card);

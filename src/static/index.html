@@ -27,6 +27,14 @@
           <span class="nav-icon">📦</span>
           <span class="nav-text">Operations Cockpit</span>
         </a>
+        <a href="/dispatch.html" class="sidebar-link" title="Dispatch Team">
+          <span class="nav-icon">🚚</span>
+          <span class="nav-text">Dispatch Team</span>
+        </a>
+        <a href="/invoices.html" class="sidebar-link" title="Invoices & Challans">
+          <span class="nav-icon">📄</span>
+          <span class="nav-text">Invoices & Challans</span>
+        </a>
         <a href="/microservices.html" class="sidebar-link" title="Microservices Fleet">
           <span class="nav-icon">🧩</span>
           <span class="nav-text">Microservices Fleet</span>
@@ -38,6 +46,10 @@
         <a href="/customer.html" class="sidebar-link" title="Customer Storefront">
           <span class="nav-icon">🛒</span>
           <span class="nav-text">Customer Storefront</span>
+        </a>
+        <a href="/visual_flow.html" class="sidebar-link" title="Visual Agent Pipeline">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-text">Visual Agent Flow</span>
         </a>
         <a href="/docs" target="_blank" class="sidebar-link" title="API Swagger Docs">
           <span class="nav-icon">📖</span>
@@ -216,7 +228,7 @@
         <!-- Center Column Navigation Tabs -->
         <div class="nav-tabs-bar">
           <button class="tab-btn active" data-tab="tab-stock">📦 Inventory & Orders</button>
-          <button class="tab-btn" data-tab="tab-docs">📄 Live PDF Documents</button>
+          <button class="tab-btn" data-tab="tab-invoices">📑 Invoices & Documents</button>
           <button class="tab-btn" data-tab="tab-fleet">🧩 Microservices & A2A</button>
         </div>
 
@@ -261,13 +273,13 @@
           </div>
         </div>
 
-        <!-- TAB 2: Generated PDF Invoices & Delivery Challans -->
-        <div id="tab-docs" class="tab-pane">
+        <!-- TAB 2: Generated Invoices & Documents Gallery -->
+        <div id="tab-invoices" class="tab-pane">
           <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>📄 Live PDF Invoices (Supplier AP & Customer AR)</span>
-            <button id="btn-refresh-invoices" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;">Refresh</button>
+            <span>📑 Generated Invoices & Delivery Challans</span>
+            <button id="btn-refresh-invoices" class="btn btn-secondary" style="font-size: 0.7rem; padding: 3px 8px;">↻ Refresh</button>
           </div>
-          <div id="invoice-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 6px; max-height: 480px; overflow-y: auto;">
+          <div id="invoice-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; max-height: 480px; overflow-y: auto;">
             <div style="font-size: 0.8rem; color: var(--text-dim); padding: 8px;">Loading generated PDF documents...</div>
           </div>
         </div>
