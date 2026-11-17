@@ -3,6 +3,16 @@
  * Handles DOM rendering for Inventory tables, PO/Invoices, A2A messages, and Execution Traces.
  */
 
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export class DashboardRenderer {
   constructor(elements) {
     this.el = elements;
@@ -108,9 +118,12 @@ export class DashboardRenderer {
       return;
     }
     this.el.a2aMessageStream.innerHTML = "";
-    events.slice(-4).forEach((evt) => {
+    events.slice(-6).forEach((evt) => {
       const card = document.createElement("div");
-      card.style.cssText = "background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 8px;";
+      card.style.cssText = "background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 8px; margin-bottom: 6px;";
+      
+      const payloadJson = evt.payload ? JSON.stringify(evt.payload, null, 2) : "{}";
+      
       card.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem;">
           <span style="color: var(--accent-cyan); font-weight: 600;">⚡ ${evt.intent}</span>
@@ -121,6 +134,10 @@ export class DashboardRenderer {
           <span>➔</span>
           <span class="framework-tag ${evt.receiver_framework.toLowerCase()}">${evt.receiver_agent} (${evt.receiver_framework})</span>
         </div>
+        <details style="margin-top: 6px; font-size: 0.72rem; cursor: pointer;">
+          <summary style="color: var(--text-dim); user-select: none;">🔍 View JSON Payload</summary>
+          <pre style="background: rgba(0,0,0,0.5); padding: 6px; border-radius: 4px; overflow-x: auto; color: #38bdf8; font-family: monospace; font-size: 0.7rem; margin-top: 4px; max-height: 120px;">${escapeHtml(payloadJson)}</pre>
+        </details>
       `;
       this.el.a2aMessageStream.appendChild(card);
     });
@@ -130,16 +147,28 @@ export class DashboardRenderer {
     if (!traces) return;
     this.el.logCount.textContent = `${traces.length} steps`;
     this.el.logContainer.innerHTML = "";
-    traces.slice(-25).forEach((t) => {
+    traces.slice(-30).forEach((t) => {
       const div = document.createElement("div");
       div.className = "log-entry";
+      div.style.cssText = "border-bottom: 1px solid rgba(255,255,255,0.05); padding: 6px 0;";
       const timeStr = t.timestamp ? t.timestamp.split("T")[1]?.slice(0, 8) : "";
+      const detailsJson = t.details ? JSON.stringify(t.details, null, 2) : null;
+      const hasDetails = detailsJson && detailsJson !== "{}";
+
       div.innerHTML = `
-        <span class="log-time">[${timeStr}]</span>
-        <span class="framework-tag ${t.framework.toLowerCase()}">${t.framework}</span>
-        <span class="log-agent">${t.agent_name}:</span>
-        <span class="log-action">${t.action}</span>
-        <span style="color: var(--text-dim); font-size: 0.7rem;">(${t.latency_ms.toFixed(1)}ms | ${t.tokens_used} tok)</span>
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span class="log-time">[${timeStr}]</span>
+          <span class="framework-tag ${t.framework.toLowerCase()}">${t.framework}</span>
+          <span class="log-agent">${t.agent_name}:</span>
+          <span class="log-action">${t.action}</span>
+          <span style="color: var(--text-dim); font-size: 0.7rem;">(${t.latency_ms.toFixed(1)}ms | ${t.tokens_used} tok)</span>
+        </div>
+        ${hasDetails ? `
+        <details style="margin-top: 4px; font-size: 0.72rem; cursor: pointer;">
+          <summary style="color: var(--text-dim); user-select: none;">🔍 Step JSON Data</summary>
+          <pre style="background: rgba(0,0,0,0.5); padding: 6px; border-radius: 4px; overflow-x: auto; color: #a7f3d0; font-family: monospace; font-size: 0.7rem; margin-top: 4px; max-height: 140px;">${escapeHtml(detailsJson)}</pre>
+        </details>
+        ` : ''}
       `;
       this.el.logContainer.appendChild(div);
     });
