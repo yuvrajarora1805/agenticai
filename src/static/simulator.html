@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WareSync AI - 42 Scenarios Interactive Simulator & Benchmark</title>
+  <title>WareSync AI - 42 Scenarios Interactive Simulator & Visual Lab</title>
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,26 +23,44 @@
     .filter-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--text-muted); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.78rem; cursor: pointer; transition: all 0.2s; font-weight: 600; }
     .filter-btn:hover, .filter-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
     
-    .scenarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
-    .scenario-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; transition: all 0.2s ease; position: relative; }
+    .scenarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+    .scenario-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; transition: all 0.2s ease; position: relative; }
     .scenario-card:hover { border-color: var(--accent-cyan); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 240, 255, 0.08); }
-    .scenario-card.blocked-type { border-left: 3px solid var(--accent-rose); }
-    .scenario-card.passed-type { border-left: 3px solid var(--accent-emerald); }
+    .scenario-card.blocked-type { border-left: 4px solid var(--accent-rose); }
+    .scenario-card.passed-type { border-left: 4px solid var(--accent-emerald); }
     
     .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .sc-id { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: var(--accent-cyan); background: rgba(0, 240, 255, 0.1); padding: 2px 6px; border-radius: 4px; }
     .sc-category { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-    .sc-title { font-size: 0.9rem; font-weight: 700; color: #fff; margin: 4px 0; }
-    .sc-prompt { font-size: 0.78rem; color: #cbd5e1; background: rgba(0,0,0,0.35); padding: 8px; border-radius: 4px; font-family: var(--font-mono); line-height: 1.4; max-height: 70px; overflow-y: auto; }
+    .sc-title { font-size: 0.92rem; font-weight: 700; color: #fff; margin: 4px 0; }
     
-    .sc-meta { display: flex; gap: 8px; font-size: 0.7rem; align-items: center; color: var(--text-dim); }
+    .prompt-box-wrapper { position: relative; }
+    .sc-prompt-input { width: 100%; font-size: 0.78rem; color: #38bdf8; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12); padding: 8px; border-radius: 4px; font-family: var(--font-mono); line-height: 1.4; resize: vertical; min-height: 55px; }
+    .sc-prompt-input:focus { border-color: var(--accent-cyan); outline: none; background: rgba(0,0,0,0.7); }
+    
+    .sc-controls-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.72rem; }
+    .sc-select { background: rgba(0,0,0,0.4); border: 1px solid var(--border-glass); color: #fff; padding: 4px 6px; border-radius: 4px; font-size: 0.72rem; }
+    
+    .action-btn-group { display: flex; gap: 6px; align-items: center; }
     .sc-btn { background: rgba(0, 240, 255, 0.15); border: 1px solid var(--accent-cyan); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .sc-btn:hover { background: var(--accent-cyan); color: #000; }
     .sc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     
-    .sc-result { display: none; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; padding: 10px; font-size: 0.72rem; }
+    .sc-btn-edit { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-glass); color: var(--text-muted); padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+    .sc-btn-edit:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+    /* Visual Pipeline Flow Inside Card */
+    .visual-step-pipeline { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px; margin-top: 6px; overflow-x: auto; font-size: 0.68rem; }
+    .pipeline-step { display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 3px; background: rgba(255,255,255,0.05); color: var(--text-dim); }
+    .pipeline-step.active { background: rgba(0, 240, 255, 0.2); color: var(--accent-cyan); font-weight: 700; border: 1px solid var(--accent-cyan); }
+    .pipeline-step.success { background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); font-weight: 700; border: 1px solid var(--accent-emerald); }
+    .pipeline-step.blocked { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); font-weight: 700; border: 1px solid var(--accent-rose); }
+    .pipeline-arrow { color: var(--text-dim); font-size: 0.65rem; }
+
+    /* Interactive Expandable JSON & Result Box */
+    .sc-result { display: none; background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; font-size: 0.72rem; margin-top: 8px; }
     .sc-result.show { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .json-code-box { background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.06); padding: 8px; border-radius: 4px; color: #a7f3d0; font-family: var(--font-mono); font-size: 0.68rem; max-height: 150px; overflow-y: auto; margin-top: 6px; }
 
     .progress-bar-container { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px; display: none; }
     .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald)); transition: width 0.2s; }
@@ -57,7 +75,7 @@
         <div class="brand-icon">W</div>
         <div>
           <div class="brand-title" style="font-size: 1rem;">WareSync AI</div>
-          <span class="brand-badge" style="font-size: 0.6rem;">Simulator Hub</span>
+          <span class="brand-badge" style="font-size: 0.6rem;">Simulation Lab</span>
         </div>
       </div>
 
@@ -101,11 +119,11 @@
     <header class="app-topbar">
       <div style="display: flex; align-items: center; gap: 10px;">
         <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">☰</button>
-        <div class="topbar-title">🧪 42-Scenario Interactive Simulator & Verification Bench</div>
+        <div class="topbar-title">🧪 42 Scenarios Interactive Simulator & Step-by-Step Inspector</div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
         <span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;">
-          ● 42 SCENARIOS LOADED
+          ● LIVE SIMULATION ENGINE READY
         </span>
       </div>
     </header>
@@ -116,7 +134,7 @@
       <div class="sim-header">
         <div class="sim-title-box">
           <h1>⚡ Multi-Agent Scenarios Simulation Lab</h1>
-          <p>Simulate individual warehouse workflows or launch full 42-case batch executions across ReAct, Few-Shot, and Adversarial Personas.</p>
+          <p>Edit prompt values live, observe visual pipeline transitions across CrewAI & Google ADK, and inspect real-time JSON responses.</p>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
           <button class="btn btn-primary" id="btn-run-all" style="padding: 10px 18px; font-size: 0.82rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-cyan), #0284c7); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 8px;">
@@ -220,6 +238,8 @@
         card.className = cardClass;
         card.id = `card-${sc.id}`;
 
+        const isAttack = sc.category.includes("Security") || sc.id >= "TC-35";
+
         card.innerHTML = `
           <div>
             <div class="sc-header">
@@ -227,14 +247,46 @@
               <span class="sc-category">${sc.category.split("&")[0]}</span>
             </div>
             <div class="sc-title">${sc.title}</div>
-            <div class="sc-prompt" title="${escapeHtml(sc.prompt)}">${escapeHtml(sc.prompt)}</div>
+            
+            <!-- EDITABLE PROMPT BOX -->
+            <div class="prompt-box-wrapper" style="margin-top: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase;">Editable Prompt:</label>
+                <span style="font-size: 0.65rem; color: var(--accent-cyan);">✏️ Edit values below</span>
+              </div>
+              <textarea class="sc-prompt-input" id="prompt-input-${sc.id}">${escapeHtml(sc.prompt)}</textarea>
+            </div>
+
+            <!-- VISUAL PIPELINE FLOW STEPS -->
+            <div class="visual-step-pipeline" id="pipeline-${sc.id}">
+              <div class="pipeline-step ${isExecuted ? (isBlocked ? 'blocked' : 'success') : ''}" id="step-guard-${sc.id}">🛡️ Guardrails</div>
+              <span class="pipeline-arrow">➔</span>
+              <div class="pipeline-step ${isExecuted && !isBlocked ? 'success' : ''}" id="step-sup-${sc.id}">👑 Supervisor</div>
+              <span class="pipeline-arrow">➔</span>
+              <div class="pipeline-step ${isExecuted && !isBlocked ? 'success' : ''}" id="step-cust-${sc.id}">📦 ADK Custodian</div>
+              <span class="pipeline-arrow">➔</span>
+              <div class="pipeline-step ${isExecuted && !isBlocked ? 'success' : ''}" id="step-act-${sc.id}">${isAttack ? '🚫 Neutralized' : '🚚 Fulfillment'}</div>
+            </div>
           </div>
 
           <div>
-            <div class="sc-meta" style="margin-bottom: 8px;">
-              <span>🏗️ <strong>${sc.architecture.toUpperCase()}</strong></span>
-              <span>•</span>
-              <span>👤 <em>${sc.persona.replace('_', ' ')}</em></span>
+            <!-- ARCHITECTURE & PERSONA SELECTORS -->
+            <div class="sc-controls-row" style="margin: 8px 0;">
+              <div>
+                <span style="color: var(--text-dim);">Arch:</span>
+                <select class="sc-select" id="arch-select-${sc.id}">
+                  <option value="react" ${sc.architecture === 'react' ? 'selected' : ''}>ReAct Loop</option>
+                  <option value="few_shot" ${sc.architecture === 'few_shot' ? 'selected' : ''}>Few-Shot Direct</option>
+                </select>
+              </div>
+              <div>
+                <span style="color: var(--text-dim);">Persona:</span>
+                <select class="sc-select" id="persona-select-${sc.id}">
+                  <option value="logistics_operator" ${sc.persona === 'logistics_operator' ? 'selected' : ''}>Operator</option>
+                  <option value="auditor" ${sc.persona === 'auditor' ? 'selected' : ''}>Auditor</option>
+                  <option value="adversarial" ${sc.persona === 'adversarial' ? 'selected' : ''}>Adversarial</option>
+                </select>
+              </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
@@ -246,7 +298,7 @@
               </div>
             </div>
 
-            <!-- RESULT DETAILS BOX -->
+            <!-- RESULT DETAILS & JSON INSPECTOR -->
             <div class="sc-result ${isExecuted ? 'show' : ''}" id="result-${sc.id}">
               ${isExecuted ? formatResultHtml(isExecuted) : ''}
             </div>
@@ -257,35 +309,58 @@
     }
 
     function formatResultHtml(res) {
+      const rawJson = JSON.stringify(res.raw_response || res, null, 2);
       if (res.guardrail_intercepted) {
         return `
-          <div style="color: var(--accent-rose); font-weight: 700; margin-bottom: 4px;">🛡️ Attack Neutralized by Guardrails</div>
-          <div>• Latency: <strong>${res.latency_ms.toFixed(1)} ms</strong> (Instant)</div>
-          <div>• LLM Tokens: <strong>0 tokens</strong> ($0.00 Cost)</div>
-          <div>• Security Boundary: <strong>Safe & Untouched</strong></div>
+          <div style="color: var(--accent-rose); font-weight: 700; margin-bottom: 4px;">🛡️ Attack Intercepted & Blocked by Guardrails</div>
+          <div>• Intercept Latency: <strong>${res.latency_ms.toFixed(1)} ms</strong> (Instant)</div>
+          <div>• LLM Token Cost: <strong>0 tokens ($0.00 USD)</strong></div>
+          <div>• State Protection: <strong>No database mutation permitted</strong></div>
+          <details style="margin-top: 6px; cursor: pointer;">
+            <summary style="color: var(--accent-cyan); font-weight: 600;">🔍 View Server Response JSON</summary>
+            <div class="json-code-box">${escapeHtml(rawJson)}</div>
+          </details>
         `;
       }
       return `
-        <div style="color: var(--accent-emerald); font-weight: 700; margin-bottom: 4px;">✅ Workflow Completed Successfully</div>
-        <div>• Latency: <strong>${res.latency_ms.toFixed(1)} ms</strong></div>
-        <div>• Tokens Consumed: <strong>${res.tokens} tok</strong> (~$${res.cost_usd.toFixed(5)})</div>
-        <div>• State Mutation: <strong>Verified on Blackboard</strong></div>
+        <div style="color: var(--accent-emerald); font-weight: 700; margin-bottom: 4px;">✅ Multi-Agent Workflow Completed</div>
+        <div>• Total Latency: <strong>${res.latency_ms.toFixed(1)} ms</strong></div>
+        <div>• Token Consumption: <strong>${res.tokens} tok</strong> (~$${res.cost_usd.toFixed(5)})</div>
+        <div>• Verified State: <strong>Committed to Hover Blackboard</strong></div>
+        <details style="margin-top: 6px; cursor: pointer;">
+          <summary style="color: var(--accent-cyan); font-weight: 600;">🔍 View Step JSON Payload</summary>
+          <div class="json-code-box">${escapeHtml(rawJson)}</div>
+        </details>
       `;
     }
 
-    // Execute single scenario
+    // Execute single scenario with edited prompt, architecture, and persona values
     window.executeSingle = async function(id) {
-      const sc = scenariosData.find(s => s.id === id);
-      if (!sc) return;
+      const promptInput = document.getElementById(`prompt-input-${id}`);
+      const archSelect = document.getElementById(`arch-select-${id}`);
+      const personaSelect = document.getElementById(`persona-select-${id}`);
+
+      const customPrompt = promptInput ? promptInput.value.trim() : "";
+      const chosenArch = archSelect ? archSelect.value : "react";
+      const chosenPersona = personaSelect ? personaSelect.value : "logistics_operator";
 
       const btn = document.getElementById(`btn-exec-${id}`);
       const statusEl = document.getElementById(`status-tag-${id}`);
       const resBox = document.getElementById(`result-${id}`);
       const card = document.getElementById(`card-${id}`);
 
+      // Visual pipeline steps
+      const sGuard = document.getElementById(`step-guard-${id}`);
+      const sSup = document.getElementById(`step-sup-${id}`);
+      const sCust = document.getElementById(`step-cust-${id}`);
+      const sAct = document.getElementById(`step-act-${id}`);
+
       btn.disabled = true;
-      btn.innerHTML = `<span>⏳</span> <span>Simulating...</span>`;
-      statusEl.textContent = "Processing...";
+      btn.innerHTML = `<span>⏳</span> <span>Running...</span>`;
+      statusEl.textContent = "Executing...";
+
+      // Reset pipeline styling
+      [sGuard, sSup, sCust, sAct].forEach(s => { if(s) s.className = 'pipeline-step active'; });
 
       try {
         const start = performance.now();
@@ -293,27 +368,41 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: sc.prompt,
-            prompt_architecture: sc.architecture,
-            persona: sc.persona
+            prompt: customPrompt,
+            prompt_architecture: chosenArch,
+            persona: chosenPersona
           })
         });
         const elapsed = performance.now() - start;
         const data = await response.json();
 
-        const isBlocked = data.status === "BLOCKED" || (data.trace && data.trace.some(t => t.action.includes("SECURITY_INTERCEPT_BLOCKED")));
+        const isBlocked = data.status === "blocked_by_guardrails" || data.status === "BLOCKED" || (data.trace && data.trace.some(t => t.action.includes("SECURITY_INTERCEPT_BLOCKED")));
         
         executedResults[id] = {
           id: id,
           guardrail_intercepted: isBlocked,
           latency_ms: elapsed,
-          tokens: isBlocked ? 0 : (sc.architecture === 'few_shot' ? 180 : 420),
-          cost_usd: isBlocked ? 0 : ((sc.architecture === 'few_shot' ? 180 : 420) / 1000 * 0.0015)
+          tokens: isBlocked ? 0 : (chosenArch === 'few_shot' ? 180 : 420),
+          cost_usd: isBlocked ? 0 : ((chosenArch === 'few_shot' ? 180 : 420) / 1000 * 0.0015),
+          raw_response: data
         };
+
+        // Update pipeline visual states
+        if (isBlocked) {
+          if (sGuard) sGuard.className = 'pipeline-step blocked';
+          if (sSup) sSup.className = 'pipeline-step';
+          if (sCust) sCust.className = 'pipeline-step';
+          if (sAct) sAct.className = 'pipeline-step blocked';
+        } else {
+          if (sGuard) sGuard.className = 'pipeline-step success';
+          if (sSup) sSup.className = 'pipeline-step success';
+          if (sCust) sCust.className = 'pipeline-step success';
+          if (sAct) sAct.className = 'pipeline-step success';
+        }
 
         // Update UI
         btn.disabled = false;
-        btn.innerHTML = `<span>🔄</span> <span>Re-run</span>`;
+        btn.innerHTML = `<span>🔄</span> <span>Re-Simulate</span>`;
         card.className = isBlocked ? 'scenario-card blocked-type' : 'scenario-card passed-type';
         statusEl.style.color = isBlocked ? 'var(--accent-rose)' : 'var(--accent-emerald)';
         statusEl.textContent = isBlocked ? '🛡️ INTERCEPTED (100% SAFE)' : '✅ PASS (COMPLETED)';
@@ -341,18 +430,17 @@
         
         progressBarFill.style.width = "100%";
 
-        // Populate results
         (batch.results || []).forEach(r => {
           executedResults[r.id] = {
             id: r.id,
             guardrail_intercepted: r.guardrail_intercepted,
             latency_ms: r.latency_ms,
             tokens: r.tokens,
-            cost_usd: r.cost_usd
+            cost_usd: r.cost_usd,
+            raw_response: r
           };
         });
 
-        // Re-render current filter
         const activeFilter = document.querySelector(".filter-btn.active")?.dataset.cat || "all";
         renderCards(activeFilter);
         updateSummaryStats();
