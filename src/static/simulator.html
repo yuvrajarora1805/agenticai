@@ -198,6 +198,9 @@
     // State storage
     let scenariosData = [];
     let executedResults = {};
+    let customPrompts = {};
+    let customArchs = {};
+    let customPersonas = {};
 
     // DOM Elements
     const gridEl = document.getElementById("scenarios-grid");
@@ -240,6 +243,10 @@
 
         const isAttack = sc.category.includes("Security") || sc.id >= "TC-35";
 
+        const currentPrompt = customPrompts[sc.id] !== undefined ? customPrompts[sc.id] : sc.prompt;
+        const currentArch = customArchs[sc.id] || sc.architecture;
+        const currentPersona = customPersonas[sc.id] || sc.persona;
+
         card.innerHTML = `
           <div>
             <div class="sc-header">
@@ -252,9 +259,12 @@
             <div class="prompt-box-wrapper" style="margin-top: 6px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <label style="font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase;">Editable Prompt:</label>
-                <span style="font-size: 0.65rem; color: var(--accent-cyan);">✏️ Edit values below</span>
+                <div style="display: flex; gap: 6px;">
+                  <span style="font-size: 0.65rem; color: var(--accent-cyan);">✏️ Edit values below</span>
+                  <button type="button" onclick="resetSinglePrompt('${sc.id}')" style="background:none; border:none; color: var(--text-muted); font-size: 0.65rem; cursor: pointer; text-decoration: underline;">Reset</button>
+                </div>
               </div>
-              <textarea class="sc-prompt-input" id="prompt-input-${sc.id}">${escapeHtml(sc.prompt)}</textarea>
+              <textarea class="sc-prompt-input" id="prompt-input-${sc.id}" oninput="onPromptChange('${sc.id}', this.value)">${escapeHtml(currentPrompt)}</textarea>
             </div>
 
             <!-- VISUAL PIPELINE FLOW STEPS -->
@@ -274,17 +284,17 @@
             <div class="sc-controls-row" style="margin: 8px 0;">
               <div>
                 <span style="color: var(--text-dim);">Arch:</span>
-                <select class="sc-select" id="arch-select-${sc.id}">
-                  <option value="react" ${sc.architecture === 'react' ? 'selected' : ''}>ReAct Loop</option>
-                  <option value="few_shot" ${sc.architecture === 'few_shot' ? 'selected' : ''}>Few-Shot Direct</option>
+                <select class="sc-select" id="arch-select-${sc.id}" onchange="customArchs['${sc.id}'] = this.value">
+                  <option value="react" ${currentArch === 'react' ? 'selected' : ''}>ReAct Loop</option>
+                  <option value="few_shot" ${currentArch === 'few_shot' ? 'selected' : ''}>Few-Shot Direct</option>
                 </select>
               </div>
               <div>
                 <span style="color: var(--text-dim);">Persona:</span>
-                <select class="sc-select" id="persona-select-${sc.id}">
-                  <option value="logistics_operator" ${sc.persona === 'logistics_operator' ? 'selected' : ''}>Operator</option>
-                  <option value="auditor" ${sc.persona === 'auditor' ? 'selected' : ''}>Auditor</option>
-                  <option value="adversarial" ${sc.persona === 'adversarial' ? 'selected' : ''}>Adversarial</option>
+                <select class="sc-select" id="persona-select-${sc.id}" onchange="customPersonas['${sc.id}'] = this.value">
+                  <option value="logistics_operator" ${currentPersona === 'logistics_operator' ? 'selected' : ''}>Operator</option>
+                  <option value="auditor" ${currentPersona === 'auditor' ? 'selected' : ''}>Auditor</option>
+                  <option value="adversarial" ${currentPersona === 'adversarial' ? 'selected' : ''}>Adversarial</option>
                 </select>
               </div>
             </div>
@@ -486,6 +496,19 @@
       statLatencyEl.textContent = `${(totalLat / total).toFixed(1)} ms`;
       statPassRateEl.textContent = `${Math.round((passedCount / total) * 100)}%`;
     }
+
+    window.onPromptChange = function(id, val) {
+      customPrompts[id] = val;
+    };
+
+    window.resetSinglePrompt = function(id) {
+      const orig = scenariosData.find(s => s.id === id);
+      if (orig) {
+        delete customPrompts[id];
+        const el = document.getElementById(`prompt-input-${id}`);
+        if (el) el.value = orig.prompt;
+      }
+    };
 
     // Category filter click handler
     document.querySelectorAll(".filter-btn").forEach(btn => {

@@ -217,6 +217,31 @@ class MetricsDashboard {
       this.charts.inventory.data.datasets[1].data = skus.map(s => data.inventory_status[s].safety || 0);
       this.charts.inventory.update("none");
     }
+
+    // 5. Live Toggled API Endpoints Feed
+    const feedEl = document.getElementById("live-endpoints-feed");
+    const countEl = document.getElementById("live-endpoints-count");
+    if (feedEl && data.api_traffic?.recent_invocations) {
+      const invocations = data.api_traffic.recent_invocations;
+      if (countEl) countEl.textContent = `${data.api_traffic.total_calls} total invocations`;
+      feedEl.innerHTML = "";
+      invocations.slice(0, 15).forEach(inv => {
+        const row = document.createElement("div");
+        row.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent-cyan); border-radius: 2px;";
+        row.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--text-dim); font-size: 0.68rem;">[${inv.time_str || ''}]</span>
+            <span style="font-weight: 700; color: ${inv.method === 'POST' ? 'var(--accent-cyan)' : 'var(--accent-emerald)'};">${inv.method}</span>
+            <span style="color: #fff; font-size: 0.72rem;">${inv.endpoint}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="framework-tag mcp" style="font-size: 0.65rem;">${inv.service || 'Gateway'}</span>
+            <span style="color: var(--accent-emerald); font-weight: 700; font-size: 0.68rem;">${inv.status} OK</span>
+          </div>
+        `;
+        feedEl.appendChild(row);
+      });
+    }
   }
 
   startPolling() {

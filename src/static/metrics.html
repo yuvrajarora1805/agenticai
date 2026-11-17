@@ -191,6 +191,17 @@
             <canvas id="chart-inventory"></canvas>
           </div>
         </div>
+
+        <!-- ROW 4: Live Toggled API Endpoints & Scenario Traffic Stream -->
+        <div class="glass-panel grafana-panel col-12" style="min-height: 220px;">
+          <div class="panel-header">
+            <span class="panel-title">⚡ Live API Endpoints Invocations & Scenario Toggles</span>
+            <span class="framework-tag mcp" id="live-endpoints-count">0 calls recorded</span>
+          </div>
+          <div id="live-endpoints-feed" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 200px; font-family: var(--font-mono); font-size: 0.72rem;">
+            <div style="color: var(--text-dim); padding: 8px;">Waiting for API or 42-Scenario benchmark calls...</div>
+          </div>
+        </div>
       </div>
     </main>
   </div>

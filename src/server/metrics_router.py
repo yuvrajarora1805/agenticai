@@ -60,6 +60,12 @@ def record_api_call(endpoint: str, method: str = "GET", status: int = 200):
         del _api_call_logs[:-500]
 
 
+@router.get("/recent-calls")
+def get_recent_calls():
+    """Returns the most recent API calls for real-time endpoint toggling display."""
+    return {"recent_calls": list(reversed(_api_call_logs[-30:]))}
+
+
 @router.get("/summary")
 def get_metrics_summary() -> Dict[str, Any]:
     """Summary metrics consumed by the Grafana-style visual telemetry dashboard."""
@@ -156,7 +162,8 @@ def get_metrics_summary() -> Dict[str, Any]:
         "api_traffic": {
             "total_calls": len(_api_call_logs),
             "call_rate_timeline": call_rate_timeline,
-            "endpoint_breakdown": dict(endpoint_counts)
+            "endpoint_breakdown": dict(endpoint_counts),
+            "recent_invocations": list(reversed(_api_call_logs[-20:]))
         },
         "inventory_status": inv_data,
         "error_count": len(blackboard.state.errors),

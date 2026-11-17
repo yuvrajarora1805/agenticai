@@ -144,6 +144,9 @@ def run_batch_benchmark():
     results = []
     total_start = time.time()
     for sc in SCENARIOS:
+        # Record invocation telemetry so Grafana dashboard live charts update
+        record_api_call(endpoint=f"/api/trigger-workflow?scenario={sc['id']}", method="POST", status=200)
+
         is_safe, sanitized = SecurityGuardrails.validate_user_prompt(sc["prompt"])
         if not is_safe:
             results.append({
