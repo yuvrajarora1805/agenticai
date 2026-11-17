@@ -138,3 +138,4 @@ Open your browser and navigate to:
 | **42 Benchmarks Run** | `curl -X POST http://localhost:8000/api/run-batch-benchmark` | All 42 scenarios executed with JSON results |
 | **PDF Generation** | Place order on `/customer.html` | Delivery Challan PDF written to `/app/data/invoices/challans/` |
 | **No Local Dep.** | Close terminal / laptop disconnect test | Cloud app continues responding smoothly |
+
