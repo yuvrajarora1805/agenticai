@@ -135,8 +135,14 @@ class WorkflowEngine:
         """ADK Inventory check + CrewAI Procurement + CrewAI Dispatch."""
         if not is_service_healthy("ms-adk-inventory"):
             self.blackboard.record_error("⚠️ CIRCUIT-BREAKER: Microservice [ms-adk-inventory] is DOWN! FastMCP tool unavailable, using cached state.")
-        sku = "SKU-1002" if "sku-1002" in req.prompt.lower() else "SKU-1001"
-        requested_qty = 15 if "15" in req.prompt else (10 if "10" in req.prompt else 5)
+        # Dynamically extract SKU and quantity from the prompt (with fallback defaults)
+        import re
+        sku_m = re.search(r'(SKU-[A-Za-z0-9\-]+)', req.prompt, re.I)
+        sku = sku_m.group(1).upper() if sku_m else ("SKU-1002" if "sku-1002" in req.prompt.lower() else "SKU-1001")
+        
+        cleaned_prompt = re.sub(r'SKU-[A-Za-z0-9\-]+', '', req.prompt, flags=re.I)
+        qty_m = re.search(r'\b(\d+)\s*(?:unit|units|pcs|qty|items|boxes)?\b', cleaned_prompt, re.I)
+        requested_qty = int(qty_m.group(1)) if qty_m else 10
 
         self.blackboard.set_system_status(SystemStatus.PROCESSING, active_agent="InventoryAgent")
         check_result = self.adk.check_stock_availability(sku, requested_qty=requested_qty)
