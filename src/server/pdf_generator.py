@@ -8,11 +8,16 @@ import os
 import hashlib
 from datetime import datetime
 from typing import Dict, Any, List
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 INVOICE_STORAGE_DIR = os.path.join(BASE_DIR, "data", "invoices")
@@ -26,6 +31,21 @@ class InvoicePDFGenerator:
 
     @staticmethod
     def _create_pdf(filepath: str, title: str, meta: Dict[str, str], items: List[List[Any]], totals: Dict[str, float]) -> str:
+        if not HAS_REPORTLAB:
+            # Fallback plain text representation if reportlab is not installed
+            content = f"{title}\n" + "=" * len(title) + "\n\n"
+            for k, v in meta.items():
+                content += f"{k}: {v}\n"
+            content += "\nITEMS:\n"
+            for row in items:
+                content += f" - SKU: {row[0]}, Desc: {row[1]}, Qty: {row[2]}, Unit: {row[3]}, Total: {row[4]}\n"
+            content += "\nTOTALS:\n"
+            for k, v in totals.items():
+                content += f"{k}: {v}\n"
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(content)
+            return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
         doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
         story = []
         styles = getSampleStyleSheet()

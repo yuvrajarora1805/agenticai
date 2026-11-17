@@ -73,6 +73,17 @@ blackboard.subscribe(blackboard_change_listener)
 
 # --- REST Endpoints ---
 
+@app.get("/api/health")
+def health_check():
+    return {
+        "status": "HEALTHY",
+        "system": "WareSync AI",
+        "timestamp": datetime.utcnow().isoformat(),
+        "agents": ["SupervisorAgent", "ProcurementAgent", "DispatchAgent", "InventoryAgent", "InvoiceAgent"],
+        "blackboard": "ACTIVE"
+    }
+
+
 @app.get("/api/state")
 def get_current_state():
     return blackboard.get_full_state().model_dump()
