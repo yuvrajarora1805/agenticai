@@ -206,6 +206,8 @@ agentiai/
 ├── docker-compose.yml                  # Container orchestration with dynamic port ${PORT:-8000}:8000
 ├── requirements.txt                    # Production dependencies (Pydantic v2, FastAPI, ReportLab, etc.)
 ├── README.md                           # Master architectural, file, and operational guide
+├── USE_CASES.md                        # Complete operational walkthroughs & 42-scenario catalog
+├── PERSONAS.md                         # Role-Based Access Control (RBAC) & Persona specifications
 ├── DOCKER_DEPLOYMENT_PLAN.md           # Step-by-step VPS container deployment blueprint
 ├── docs_callbacks_and_architecture.md  # Deep-dive documentation on callbacks and patterns
 ├── plan.md                             # Architectural design document and roadmap
