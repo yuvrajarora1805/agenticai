@@ -41,7 +41,7 @@ class OrderConfirmationRequest(BaseModel):
     customer_name: str = "Enterprise Logistics Hub"
 
 
-@router.get("/catalog")
+@router.get("/catalog", summary="Get Live Product Catalog")
 def get_live_catalog() -> Dict[str, Any]:
     """Retrieves live warehouse inventory items directly from blackboard state (RAG Source)."""
     items = []
@@ -58,7 +58,7 @@ def get_live_catalog() -> Dict[str, Any]:
     return {"catalog": items}
 
 
-@router.post("/inquire")
+@router.post("/inquire", summary="Customer Conversational Stock Inquiry")
 def customer_inquire(req: CustomerInquiryRequest) -> Dict[str, Any]:
     """Step 1: Customer asks for stock -> Guardrails Check -> Live RAG Gemini Reasoning."""
     # 1. ORDER BOT GUARDRAILS LAYER
@@ -254,7 +254,7 @@ def customer_inquire(req: CustomerInquiryRequest) -> Dict[str, Any]:
     }
 
 
-@router.post("/confirm-and-dispatch")
+@router.post("/confirm-and-dispatch", summary="Confirm Order & Trigger Dispatch")
 def confirm_and_dispatch(req: OrderConfirmationRequest) -> Dict[str, Any]:
     """Steps 2, 3, 4: Customer confirms -> Reserve stock -> Packing & Dispatch -> Challan & Invoice."""
     stock_item = blackboard.get_stock_item(req.sku)
@@ -366,7 +366,7 @@ def confirm_and_dispatch(req: OrderConfirmationRequest) -> Dict[str, Any]:
     }
 
 
-@router.post("/factory-bulk-restock")
+@router.post("/factory-bulk-restock", summary="Factory Bulk Restock (PO & Supplier Invoice)")
 def factory_bulk_restock(sku: str = "SKU-1002", restock_qty: int = 50) -> Dict[str, Any]:
     """Step 5: Hub triggers bulk factory order (PO) and Supplier Commercial Invoice (AP)."""
     po_id = f"PO-FACT-{int(time.time() * 1000) % 100000}"
@@ -417,7 +417,7 @@ class VisualSimulationRequest(BaseModel):
     trigger_auto_restock: bool = True
 
 
-@router.post("/simulate-visual-flow")
+@router.post("/simulate-visual-flow", summary="Simulate End-to-End Visual Workflow")
 def simulate_visual_flow(req: VisualSimulationRequest) -> Dict[str, Any]:
     """
     Executes and traces the complete end-to-end agentic workflow:

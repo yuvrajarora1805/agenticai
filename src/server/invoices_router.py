@@ -41,9 +41,9 @@ def seed_demo_invoices():
 seed_demo_invoices()
 
 
-@router.get("/list")
+@router.get("/list", summary="List All Invoices & Challans")
 def list_invoices() -> Dict[str, List[Dict[str, Any]]]:
-    """Lists all stored Customer and Supplier PDF invoices sorted with most recent on top."""
+    """Lists all stored Customer (AR) invoices, Delivery Challans (DC), and Supplier (AP) PDF invoices sorted newest first."""
     results = []
 
     def get_sorted_files(directory: str):
@@ -103,7 +103,7 @@ def list_invoices() -> Dict[str, List[Dict[str, Any]]]:
     return {"invoices": results}
 
 
-@router.get("/preview/{invoice_id}")
+@router.get("/preview/{invoice_id}", summary="Preview PDF Document Inline")
 def preview_invoice(invoice_id: str, type: str = "customer"):
     """Serves inline PDF for browser iframe preview."""
     clean_id = invoice_id.replace(".pdf", "")
@@ -130,7 +130,7 @@ def preview_invoice(invoice_id: str, type: str = "customer"):
     )
 
 
-@router.get("/download/{invoice_id}")
+@router.get("/download/{invoice_id}", summary="Download PDF Invoice / Challan")
 def download_invoice(invoice_id: str, type: str = "customer"):
     """Downloads the invoice PDF with attachment header."""
     clean_id = invoice_id.replace(".pdf", "")

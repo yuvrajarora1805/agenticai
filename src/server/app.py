@@ -6,6 +6,7 @@ Provides lightweight REST routers and real-time WebSocket state streaming.
 import asyncio
 import json
 import time
+from datetime import datetime
 from typing import Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
@@ -25,7 +26,56 @@ from src.schemas.models import StockItem, SystemStatus, AgentFramework
 from src.mcp_server.tools import WarehouseMCPServer
 from src.server.microservices_registry import get_microservices_fleet, toggle_microservice, reset_microservices_fleet
 
-app = FastAPI(title="WareSync AI Dashboard Server")
+tags_metadata = [
+    {
+        "name": "System & State",
+        "description": "Health checks, live Hover Blackboard shared state inspection, HITL (Human-in-the-Loop) approval modes, and system reset.",
+    },
+    {
+        "name": "Workflows & Multi-Agent Engine",
+        "description": "Multi-agent orchestration endpoints powered by CrewAI and Google Agent Development Kit (ADK), executing 42 test scenarios with automated guardrails.",
+    },
+    {
+        "name": "Customer Storefront & Dispatch",
+        "description": "Autonomous customer conversational shopping, order fulfillment, delivery challan generation, stock reservations, and factory bulk restock.",
+    },
+    {
+        "name": "Invoices",
+        "description": "PDF invoice generation, 3-way matching document audit (PO vs GRN vs Invoice), accounts payable & receivable workflows.",
+    },
+    {
+        "name": "Microservices & Chaos Engineering",
+        "description": "Microservices fleet directory, circuit breaker status, and chaos engineering service outage toggles.",
+    },
+    {
+        "name": "Observability & Metrics",
+        "description": "Prometheus/Grafana telemetry exporter, endpoint traffic histograms, token counters, and latency percentiles.",
+    },
+    {
+        "name": "Observability & Tracing",
+        "description": "Langfuse multi-agent step tracing, telemetry spans, execution graphs, and token auditing.",
+    },
+]
+
+app = FastAPI(
+    title="WareSync AI - Autonomous Multi-Agent ERP & Supply Chain Hub",
+    description="""
+# WareSync AI API Documentation
+
+Autonomous Warehouse, Procurement, 3-Way Invoice Matching, and Finance Reconciliation Engine.
+
+### 🚀 Architecture Highlights:
+* **Dual Multi-Agent Framework**: Strictly built using **CrewAI** (hierarchical orchestration & deterministic workflows) and **Google ADK** (Google Agent Development Kit for dynamic task execution).
+* **Hover Blackboard Pattern**: Thread-safe in-memory state engine (`RLock`) synchronizing state in real-time across agents, WebSockets, and REST interfaces.
+* **FastMCP Tools Layer**: Decoupled Model Context Protocol tools for stock queries, purchase order issuance, delivery challans, and 3-way invoice reconciliation.
+* **Enterprise Guardrails**: Rigorous input validation intercepting prompt injections, jailbreaks, and out-of-scope queries.
+* **Observability**: Full Prometheus metrics exporter (`/api/metrics/prometheus`) and Langfuse distributed execution tracing.
+    """,
+    version="2.0.0",
+    openapi_tags=tags_metadata,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 app.include_router(invoices_router)
 app.include_router(customer_router)
 app.include_router(metrics_router)
@@ -73,8 +123,9 @@ blackboard.subscribe(blackboard_change_listener)
 
 # --- REST Endpoints ---
 
-@app.get("/api/health")
+@app.get("/api/health", tags=["System & State"], summary="System Health Check")
 def health_check():
+    """Returns system health, agent fleet statuses, and blackboard connection status."""
     return {
         "status": "HEALTHY",
         "system": "WareSync AI",
@@ -84,13 +135,15 @@ def health_check():
     }
 
 
-@app.get("/api/state")
+@app.get("/api/state", tags=["System & State"], summary="Get Hover Blackboard State")
 def get_current_state():
+    """Returns complete in-memory shared state snapshot including inventory, active orders, purchase orders, invoices, and execution traces."""
     return blackboard.get_full_state().model_dump()
 
 
-@app.post("/api/reset")
+@app.post("/api/reset", tags=["System & State"], summary="Reset In-Memory State & Inventory")
 def reset_state():
+    """Resets blackboard state, active orders, purchase orders, errors, and re-seeds baseline inventory levels."""
     blackboard.state.active_orders.clear()
     blackboard.state.purchase_orders.clear()
     blackboard.state.invoices.clear()
@@ -104,15 +157,17 @@ def reset_state():
     return {"status": "reset_success"}
 
 
-@app.post("/api/settings/mode")
+@app.post("/api/settings/mode", tags=["System & State"], summary="Configure Approval Mode (HITL vs Auto)")
 def set_approval_mode(payload: Dict[str, str]):
+    """Toggles between AUTO execution and Human-In-The-Loop (HITL) approval mode for high-value orders and reorders."""
     mode = payload.get("mode", "AUTO")
     blackboard.set_approval_mode(mode)
     return {"status": "success", "mode": blackboard.state.approval_mode}
 
 
-@app.post("/api/approvals/{approval_id}/action")
+@app.post("/api/approvals/{approval_id}/action", tags=["System & State"], summary="Approve or Reject HITL Action")
 def handle_approval_action(approval_id: str, payload: Dict[str, str]):
+    """Executes or rejects a pending human-in-the-loop approval item (e.g. factory replenishment restock or dispatch)."""
     action = payload.get("action", "approve")  # "approve" or "reject"
     item = blackboard.resolve_pending_approval(approval_id, action)
     if not item:
@@ -129,18 +184,21 @@ def handle_approval_action(approval_id: str, payload: Dict[str, str]):
     return {"status": "success", "action": action, "item": item}
 
 
-@app.post("/api/trigger-workflow")
+@app.post("/api/trigger-workflow", tags=["Workflows & Multi-Agent Engine"], summary="Trigger Multi-Agent Workflow")
 def trigger_workflow(req: WorkflowRequest):
+    """Executes single scenario or custom prompt using CrewAI hierarchical agents and Google ADK tools."""
     return engine.execute(req)
 
 
-@app.get("/api/scenarios")
+@app.get("/api/scenarios", tags=["Workflows & Multi-Agent Engine"], summary="List All 42 Test Scenarios")
 def get_all_scenarios():
+    """Returns complete catalog of 42 benchmark scenarios covering order fulfillment, stock deficit, invoice audits, edge cases, and adversarial prompt injection."""
     return {"scenarios": SCENARIOS}
 
 
-@app.post("/api/run-batch-benchmark")
+@app.post("/api/run-batch-benchmark", tags=["Workflows & Multi-Agent Engine"], summary="Execute Batch Benchmark Suite")
 def run_batch_benchmark():
+    """Runs automated benchmark across all 42 scenarios, verifying security guardrails, token latency, and generating Grafana telemetry."""
     results = []
     total_start = time.time()
     for sc in SCENARIOS:
@@ -172,8 +230,9 @@ def run_batch_benchmark():
     }
 
 
-@app.get("/api/benchmark-matrix")
+@app.get("/api/benchmark-matrix", tags=["Workflows & Multi-Agent Engine"], summary="Get Comparative Architecture Matrix (ReAct vs Few-Shot)")
 def get_benchmark_matrix():
+    """Returns performance comparison benchmarks between ReAct reasoning and Few-Shot prompting across latency, token consumption, and cost."""
     return {
         "comparisons": [
             {
@@ -200,15 +259,15 @@ def get_benchmark_matrix():
     }
 
 
-@app.get("/api/microservices")
+@app.get("/api/microservices", tags=["Microservices & Chaos Engineering"], summary="List Active Microservices Fleet")
 def get_registered_microservices():
     """Returns directory of all active microservices, agents, tools, and endpoints."""
     return {"microservices": get_microservices_fleet()}
 
 
-@app.post("/api/microservices/{service_id}/toggle")
+@app.post("/api/microservices/{service_id}/toggle", tags=["Microservices & Chaos Engineering"], summary="Chaos Engineering Service Outage Toggle")
 def toggle_service_status(service_id: str):
-    """Simulate microservice outage / restore service."""
+    """Simulates microservice outage or restoration to test circuit breakers, agent fallbacks, and resilient routing."""
     updated = toggle_microservice(service_id)
     if updated.get("status") == "DOWN":
         blackboard.record_error(f"⚠️ Microservice [{updated.get('name', service_id)}] is simulated DOWN (Circuit Breaker armed).")
@@ -224,8 +283,9 @@ def toggle_service_status(service_id: str):
     return {"status": "ok", "service": updated}
 
 
-@app.get("/api/traces")
+@app.get("/api/traces", tags=["Observability & Tracing"], summary="List Langfuse Multi-Agent Traces")
 def get_langfuse_traces():
+    """Returns recent Langfuse telemetry execution traces with timestamps, latency, and step counts."""
     return {
         "traces": tracer.get_traces(limit=25),
         "langfuse_host": tracer.host,
@@ -233,8 +293,9 @@ def get_langfuse_traces():
     }
 
 
-@app.get("/api/traces/{trace_id}")
+@app.get("/api/traces/{trace_id}", tags=["Observability & Tracing"], summary="Get Trace Execution Details")
 def get_langfuse_trace_details(trace_id: str):
+    """Retrieves granular step-by-step agent spans, inputs, outputs, and token counts for a specific trace ID."""
     tr = tracer.get_trace_by_id(trace_id)
     if not tr:
         raise HTTPException(status_code=404, detail="Trace not found")

@@ -60,13 +60,13 @@ def record_api_call(endpoint: str, method: str = "GET", status: int = 200):
         del _api_call_logs[:-500]
 
 
-@router.get("/recent-calls")
+@router.get("/recent-calls", summary="Get Recent API Invocations")
 def get_recent_calls():
     """Returns the most recent API calls for real-time endpoint toggling display."""
     return {"recent_calls": list(reversed(_api_call_logs[-30:]))}
 
 
-@router.get("/summary")
+@router.get("/summary", summary="Get Real-Time Telemetry Summary")
 def get_metrics_summary() -> Dict[str, Any]:
     """Summary metrics consumed by the Grafana-style visual telemetry dashboard."""
     traces = tracer.get_traces(limit=50)
@@ -170,7 +170,7 @@ def get_metrics_summary() -> Dict[str, Any]:
     }
 
 
-@router.get("/prometheus", response_class=PlainTextResponse)
+@router.get("/prometheus", summary="Prometheus Plaintext Metrics Feed", response_class=PlainTextResponse)
 def get_prometheus_metrics() -> str:
     """Standard Prometheus text exposition format compatible with Grafana / Prometheus scrapers."""
     summary = get_metrics_summary()
